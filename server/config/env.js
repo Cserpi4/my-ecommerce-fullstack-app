@@ -6,7 +6,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Betöltjük az .env fájlt (egy szinttel feljebb a /server mappából)
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.resolve(__dirname, '../.env') });
+}
 
 // Kötelező változók ellenőrzése
 const requiredEnvVars = [
