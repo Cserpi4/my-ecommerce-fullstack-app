@@ -1,0 +1,59 @@
+{
+  "name": "football-shop-app",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.9.0",
+    "@stripe/react-stripe-js": "^5.2.0",
+    "@stripe/stripe-js": "^8.0.0",
+    "axios": "^1.12.2",
+    "lucide-react": "^0.545.0",
+    "multer": "^2.0.2",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.9.3",
+    "react-scripts": "^5.0.1",
+    "react-toastify": "^11.0.5",
+    "recharts": "^3.2.1",
+    "sharp": "^0.34.4",
+    "stripe": "^19.1.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "dev": "nodemon server/index.js",
+    "seed": "node server/scripts/seed_products.js",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!(axios)/)"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.4",
+    "@babel/preset-env": "^7.28.3",
+    "@babel/preset-react": "^7.27.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "babel-jest": "^30.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "jest": "^27.5.1",
+    "prettier": "^3.6.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  }
+}

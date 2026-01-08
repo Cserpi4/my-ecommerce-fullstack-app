@@ -1,0 +1,105 @@
+.sidebar.dark {
+  width: 240px;
+  background-color: #1e293b; /* világosabb sötétszürke - jobb kontraszt */
+  border-radius: 16px;
+  padding: 28px 18px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  color: #f9fafb; /* ✅ tiszta fehér szöveg */
+  font-family: 'Inter', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: fit-content;
+  position: sticky;
+  top: 80px; /* ✅ lejjebb hozva, hogy a ProductCard-okkal egyvonalban legyen */
+}
+
+/* ====== TITLE ====== */
+.sidebar-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff; /* ✅ fehér, kontrasztos */
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+}
+
+/* ====== LIST ====== */
+.sidebar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ====== ITEM ====== */
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #e5e7eb;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.sidebar-item:hover {
+  background-color: #334155; /* világosabb hover */
+  color: #ffffff;
+}
+
+.sidebar-item.active {
+  background-color: #3b82f6; /* kék highlight */
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+/* ====== ICON ====== */
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  transition: color 0.3s ease;
+}
+
+.sidebar-item:hover .icon,
+.sidebar-item.active .icon {
+  color: #ffffff;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 1024px) {
+  .sidebar.dark {
+    width: 100%;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: static;
+    padding: 20px;
+    top: unset;
+  }
+
+  .sidebar-item {
+    padding: 8px 16px;
+  }
+}
+
+.show-all {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+  color: #ffffffcc;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    transform 0.1s;
+}
+
+.show-all:hover {
+  color: #fff;
+  transform: translateX(3px);
+}

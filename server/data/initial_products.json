@@ -1,0 +1,56 @@
+[
+  {
+    "name": "Defending Throw-in: Own Half 1",
+    "description": "Fundamental setup and positioning for defending an opposition throw-in deep in your defensive half. Focuses on minimizing space and preventing switches of play.",
+    "price": 0.99,
+    "file_name": "defending_throwin_ownhalf_01.jpg"
+  },
+  {
+    "name": "Defending Throw-in: Opponent's Half 1",
+    "description": "Tactical scheme for defending throw-ins in the opponent's half. High-press technique to immediately recover the ball and launch a counter-attack.",
+    "price": 0.99,
+    "file_name": "defending_throwin_opponenthalf_01.jpg"
+  },
+  {
+    "name": "Defending Free-kick 1",
+    "description": "The basic zonal marking structure for defending indirect free-kicks outside the penalty box. Covers wall positioning and player roles for quick clearance.",
+    "price": 0.99,
+    "file_name": "defending_freekick_01.jpg"
+  },
+  {
+    "name": "Defending In-swinging Corner 1",
+    "description": "Specific defensive organization against an in-swinging (inswing) corner kick, detailing the goalkeeper's command zone and the required angles for headers.",
+    "price": 0.99,
+    "file_name": "defending_inswing_corner_01.jpg"
+  },
+  {
+    "name": "Defending Short Corner 2: 1-Man Setup",
+    "description": "Advanced tactical setup using a single player to press the short corner, forcing isolation and frustrating the opponent's attacking routine.",
+    "price": 0.99,
+    "file_name": "defending_shortcorner_02.jpg"
+  },
+  {
+    "name": "Attacking Throw-in: Own Half / Middle Third 1",
+    "description": "Offensive routine for retaining possession and progressing play quickly through the mid-third using a short, controlled throw-in sequence.",
+    "price": 0.99,
+    "file_name": "attacking_throwin_middle_01.jpg"
+  },
+  {
+    "name": "Attacking Throw-in: Final Third / Attacking Third 1",
+    "description": "High-risk, high-reward attacking play from a throw-in near the box (Final Third), designed to create immediate crossing or shooting opportunities.",
+    "price": 0.99,
+    "file_name": "attacking_throwin_final_01.jpg"
+  },
+  {
+    "name": "Attacking Free Kick 1",
+    "description": "A classic indirect free-kick routine designed to draw defenders and open space for a targeted shot on goal from outside the box.",
+    "price": 1.29,
+    "file_name": "attacking_freekick_01.jpg"
+  },
+  {
+    "name": "Attacking Corner 1",
+    "description": "A standard attacking corner kick routine focusing on pre-determined runs and blocking movements to create space for a powerful header at the near post.",
+    "price": 1.29,
+    "file_name": "attacking_corner_01.jpg"
+  }
+]

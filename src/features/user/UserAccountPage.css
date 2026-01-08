@@ -1,0 +1,155 @@
+.user-page {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #111827, #0b0f16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  font-family: 'Inter', sans-serif;
+}
+
+.user-card {
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 40px 36px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 480px;
+  animation: fadeIn 0.4s ease;
+}
+
+.user-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.user-icon {
+  color: #10b981;
+  margin-bottom: 8px;
+}
+
+.user-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.user-subtitle {
+  font-size: 0.95rem;
+  color: #9ca3af;
+}
+
+.user-info-message {
+  text-align: center;
+  color: #9ca3af;
+}
+
+.user-error {
+  text-align: center;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  animation: shake 0.3s ease;
+}
+
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.user-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  color: #d1d5db;
+}
+
+.label-icon {
+  color: #10b981;
+  margin-right: 6px;
+}
+
+.user-input {
+  background: #374151;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.user-input:focus {
+  background: #4b5563;
+  box-shadow: 0 0 0 2px #10b981;
+}
+
+.user-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #10b981;
+  color: #fff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.25s ease,
+    transform 0.2s ease;
+}
+
+.user-button:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.user-button:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+@media (max-width: 768px) {
+  .user-card {
+    padding: 30px 24px;
+  }
+
+  .user-title {
+    font-size: 1.5rem;
+  }
+}

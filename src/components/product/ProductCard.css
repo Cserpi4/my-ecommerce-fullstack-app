@@ -1,0 +1,173 @@
+/* === Alap kártya === */
+.product-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 420px;
+  text-align: center;
+}
+
+/* === Kép === */
+.product-image-container {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.product-image {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+/* === Fullscreen ikon — most a kártya jobb felső sarkában === */
+.fullscreen-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  z-index: 3;
+}
+
+.fullscreen-btn:hover {
+  background: #fff;
+  transform: scale(1.05);
+}
+
+/* === Szöveg === */
+.product-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.product-description {
+  font-size: 0.95rem;
+  color: #4b5563;
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+.product-price {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #059669;
+  text-align: center;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* === Fullscreen overlay === */
+.fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+/* === Fullscreen card === */
+.fullscreen-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+  max-width: 900px;
+  width: 90%;
+  padding: 0 28px 32px;
+  position: relative;
+  animation: scaleUp 0.3s ease;
+}
+
+/* === Fullscreen header (név + X gomb) === */
+.fullscreen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.fullscreen-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #111;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: #ef4444;
+}
+
+/* === Kép fullscreen nézetben === */
+.fullscreen-image {
+  width: 100%;
+  max-height: 500px;
+  object-fit: contain; /* teljes kép látszik, nincs levágás */
+  border-radius: 12px;
+  margin-top: 24px;
+  margin-bottom: 20px;
+  animation: fadeIn 0.4s ease;
+}
+
+/* === Szöveg + ár fullscreenben === */
+.fullscreen-info {
+  text-align: left;
+  color: #444;
+  line-height: 1.6;
+}
+
+.info-price {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #059669;
+  margin-top: 12px;
+}
+
+/* === Animációk === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
+}
