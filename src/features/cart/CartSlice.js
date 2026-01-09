@@ -4,48 +4,39 @@ import cartApi from '../../apis/cart.js';
 
 // --- Async thunks ---
 export const fetchCart = createAsyncThunk('cart/fetchCart', async () => {
-  return await cartApi.getCart(); // returns { success, data }
+  return await cartApi.getCart(); // { success, data } where data is cart or null
 });
 
 export const addCartItem = createAsyncThunk(
   'cart/addItem',
   async ({ productId, quantity = 1 }, thunkAPI) => {
-    const state = thunkAPI.getState();
-    let cartId = state.cart.cartId;
+    // ✅ session/user cart: no cartId needed
+    const resp = await cartApi.addItem(productId, quantity);
 
-    // If cartId missing, fetch cart and extract it from payload.data
-    if (!cartId) {
-      const cartResp = await cartApi.getCart(); // { success, data }
-      const cartData = cartResp?.data;
+    // ✅ always re-hydrate full cart after mutation (source of truth)
+    await thunkAPI.dispatch(fetchCart());
 
-      cartId = cartData?.cartId ?? cartData?.id ?? null;
-
-      if (!cartId) {
-        cartId = null;
-      }
-
-      thunkAPI.dispatch(setCartId(cartId));
-      // Optional: also hydrate items if present
-      if (Array.isArray(cartData?.items)) {
-        thunkAPI.dispatch(setCartItems(cartData.items));
-      }
-    }
-
-    return await cartApi.addItem(cartId, productId, quantity); // returns { success, data }
+    return resp;
   }
 );
 
 export const updateCartItem = createAsyncThunk(
   'cart/updateItem',
-  async ({ cartItemId, quantity }) => {
-    return await cartApi.updateItem(cartItemId, quantity); // returns { success, data }
+  async ({ cartItemId, quantity }, thunkAPI) => {
+    const resp = await cartApi.updateItem(cartItemId, quantity);
+    await thunkAPI.dispatch(fetchCart());
+    return resp;
   }
 );
 
-export const removeCartItem = createAsyncThunk('cart/removeItem', async cartItemId => {
-  const response = await cartApi.removeItem(cartItemId); // returns { success, data }
-  return { cartItemId, ...response };
-});
+export const removeCartItem = createAsyncThunk(
+  'cart/removeItem',
+  async (cartItemId, thunkAPI) => {
+    const resp = await cartApi.removeItem(cartItemId);
+    await thunkAPI.dispatch(fetchCart());
+    return { cartItemId, ...resp };
+  }
+);
 
 // --- Initial state ---
 const initialState = {
@@ -61,6 +52,7 @@ const cartSlice = createSlice({
   reducers: {
     clearCart: state => {
       state.items = [];
+      state.cartId = null;
     },
     setCartId: (state, action) => {
       state.cartId = action.payload ?? state.cartId;
@@ -82,74 +74,33 @@ const cartSlice = createSlice({
         const payload = action.payload; // { success, data }
         const cartData = payload?.data;
 
-        // cartData can be { cartId, items } OR just items array
-        if (Array.isArray(cartData)) {
-          state.items = cartData;
+        // If backend returns null/empty for anon without session yet
+        if (!cartData || typeof cartData !== 'object') {
+          state.cartId = state.cartId ?? null;
+          state.items = [];
           return;
         }
 
         state.cartId = cartData?.cartId ?? cartData?.id ?? state.cartId;
-        state.items = cartData?.items ?? [];
+        state.items = Array.isArray(cartData?.items) ? cartData.items : [];
       })
       .addCase(fetchCart.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error?.message || 'Failed to fetch cart';
       })
 
-      // addCartItem
+      // addCartItem / updateCartItem / removeCartItem
+      .addCase(addCartItem.pending, state => {
+        state.error = null;
+      })
       .addCase(addCartItem.rejected, (state, action) => {
         state.error = action.error?.message || 'Failed to add item to cart';
       })
-      .addCase(addCartItem.fulfilled, (state, action) => {
-        const payload = action.payload; // { success, data }
-        const data = payload?.data;
-
-        // If API returns { cartId, items }
-        if (data && typeof data === 'object' && Array.isArray(data.items)) {
-          state.cartId = data.cartId ?? data.id ?? state.cartId;
-          state.items = data.items;
-          return;
-        }
-
-        // If API returns a single cart item in data
-        const item = data ?? null;
-        if (!item) return;
-
-        const existing = state.items.find(i => i.id === item.id);
-        if (existing) {
-          existing.quantity = item.quantity ?? existing.quantity;
-        } else {
-          state.items.push(item);
-        }
+      .addCase(updateCartItem.rejected, (state, action) => {
+        state.error = action.error?.message || 'Failed to update cart item';
       })
-
-      // updateCartItem
-      .addCase(updateCartItem.fulfilled, (state, action) => {
-        const payload = action.payload; // { success, data }
-        const data = payload?.data;
-
-        if (data && typeof data === 'object' && Array.isArray(data.items)) {
-          state.cartId = data.cartId ?? data.id ?? state.cartId;
-          state.items = data.items;
-          return;
-        }
-
-        const updated = data ?? null;
-        if (!updated) return;
-
-        const index = state.items.findIndex(i => i.id === updated.id);
-        if (index !== -1) state.items[index] = updated;
-      })
-
-      // removeCartItem
-      .addCase(removeCartItem.fulfilled, (state, action) => {
-        state.items = state.items.filter(item => item.id !== action.payload.cartItemId);
-
-        const data = action.payload?.data;
-        if (data && typeof data === 'object' && Array.isArray(data.items)) {
-          state.cartId = data.cartId ?? data.id ?? state.cartId;
-          state.items = data.items;
-        }
+      .addCase(removeCartItem.rejected, (state, action) => {
+        state.error = action.error?.message || 'Failed to remove cart item';
       });
   },
 });

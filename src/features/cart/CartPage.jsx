@@ -33,16 +33,8 @@ const CartPage = () => {
   };
 
   const handleQuantityChange = (cartItemId, quantity) => {
-    dispatch(updateCartItem({ cartItemId, quantity: Number(quantity) }));
-  };
-
-  const handleProceedToCheckout = () => {
-    navigate('/checkout', {
-      state: {
-        cartItems: items,
-        total: totalPrice,
-      },
-    });
+    const q = Math.max(1, Number(quantity) || 1);
+    dispatch(updateCartItem({ cartItemId, quantity: q }));
   };
 
   if (loading) {
@@ -71,15 +63,14 @@ const CartPage = () => {
 
       <div className="cart-items">
         {items.map(item => {
-          // Support both item shapes:
-          // 1) flattened: { id, name, price, image, quantity }
-          // 2) nested: { id, quantity, product: { name, price, image } }
+          const cartItemId = item.cartItemId ?? item.cart_item_id ?? item.id;
+
           const name = item.name ?? item.product?.name ?? 'Item';
           const price = Number(item.price ?? item.product?.price ?? 0);
           const image = item.image ?? item.product?.image ?? null;
 
           return (
-            <div key={item.id} className="cart-item">
+            <div key={cartItemId} className="cart-item">
               <img
                 src={image || 'https://via.placeholder.com/300x300?text=No+Image'}
                 alt={name}
@@ -95,11 +86,11 @@ const CartPage = () => {
                     type="number"
                     min="1"
                     value={item.quantity ?? 1}
-                    onChange={e => handleQuantityChange(item.id, e.target.value)}
+                    onChange={e => handleQuantityChange(cartItemId, e.target.value)}
                     className="cart-item-quantity"
                   />
 
-                  <button className="cart-item-remove" onClick={() => handleRemove(item.id)}>
+                  <button className="cart-item-remove" onClick={() => handleRemove(cartItemId)}>
                     <Trash2 size={18} />
                     Remove
                   </button>
@@ -112,7 +103,7 @@ const CartPage = () => {
 
       <div className="cart-summary">
         <h3 className="cart-total">Total: ${Number(totalPrice).toFixed(2)}</h3>
-        <button className="checkout-button" onClick={handleProceedToCheckout}>
+        <button className="checkout-button" onClick={() => navigate('/checkout')}>
           Proceed to Checkout
         </button>
       </div>

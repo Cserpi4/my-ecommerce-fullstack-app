@@ -1,13 +1,12 @@
 import client from './client.js'; // Axios instance
 
-// Backend returns: { success: true, cart: {...} }
-// Slice expects:   { success, data: {...} }
-const normalize = (resp) => {
-  return {
-    success: resp?.success === true,
-    data: resp?.cart ?? resp?.data ?? null,
-  };
-};
+// Backend may return: { success: true, cart } OR { success: true, item } OR { success, data }
+// Slice expects: { success, data }
+const normalize = (resp) => ({
+  success: resp?.success === true,
+  data: resp?.cart ?? resp?.item ?? resp?.data ?? null,
+  message: resp?.message ?? null,
+});
 
 const cartApi = {
   async getCart() {
@@ -15,8 +14,9 @@ const cartApi = {
     return normalize(data);
   },
 
-  async addItem(cartId, productId, quantity) {
-    const { data } = await client.post('/cart/items', { cartId, productId, quantity });
+  // ✅ No cartId param: backend uses user or session cart
+  async addItem(productId, quantity) {
+    const { data } = await client.post('/cart/items', { productId, quantity });
     return normalize(data);
   },
 

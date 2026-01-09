@@ -1,16 +1,29 @@
-import pool from '../config/db.js';
+import cartModel from '../models/cartModel.js';
 
-const getCartByUserId = async userId => {
-  const res = await pool.query('SELECT * FROM carts WHERE user_id = $1', [userId]);
-  return res.rows[0];
+const cartService = {
+
+  async getCartByUserId(userId) {
+    return cartModel.getByUserId(userId);
+  },
+
+  async getCartById(cartId) {
+    return cartModel.getById(cartId);
+  },
+
+  async createCart(userId = null) {
+    return cartModel.create(userId);
+  },
+
+  async getOrCreateCartByUserId(userId) {
+    let cart = await cartModel.getByUserId(userId);
+
+    if (!cart) {
+      cart = await cartModel.create(userId);
+    }
+
+    return cart;
+  },
+
 };
 
-const createCart = async userId => {
-  const res = await pool.query('INSERT INTO carts(user_id) VALUES($1) RETURNING *', [userId]);
-  return res.rows[0];
-};
-
-export default {
-  getCartByUserId,
-  createCart,
-};
+export default cartService;

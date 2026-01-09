@@ -1,14 +1,16 @@
 import express from 'express';
 import cartController from '../controllers/cartController.js';
-import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Csak belépett felhasználók
-// // router.use(authMiddleware.protect);
+/*
+  Cart flow:
+  - GET    /api/cart        → user cart vagy anon session cart
+  - POST   /api/cart/items → item hozzáadás (cart automatikusan létrejön)
+  - DELETE /api/cart/items/:cartItemId → item törlés
+*/
 
 router.get('/', cartController.getUserCart);
-router.post('/', cartController.createCart);
 router.post('/items', cartController.addItem);
 router.delete('/items/:cartItemId', cartController.removeItem);
 
