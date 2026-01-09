@@ -34,7 +34,7 @@ const Header = () => {
     <header className="header-root">
       <div className="header-content">
         <div className="logo-link" onClick={() => handleNavigation('/')}>
-          <Tally3 strokeWidth={3} /> Football-Shop App
+          <Tally3 strokeWidth={3} /> Football-Shop
         </div>
 
         {/* Desktop nav */}

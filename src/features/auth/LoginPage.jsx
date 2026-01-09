@@ -29,7 +29,7 @@ const LoginPage = () => {
         <BackButton /> {/* ✅ Back button itt van */}
         <div className="login-header">
           <LogIn size={28} className="login-icon" />
-          <h2 className="login-title">Sign In to Football-shop</h2>
+          <h2 className="login-title">Sign In to Football-Shop</h2>
         </div>
         {error && <p className="login-error">⚠️ {error}</p>}
         <input
