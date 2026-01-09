@@ -2,25 +2,21 @@ import React, { useState } from 'react';
 import './ProductCard.css';
 import { Maximize2 } from 'lucide-react';
 import { useDispatch } from 'react-redux';
-import { addCartItem } from '../../features/cart/CartSlice'; // <-- igazítsd, ha máshol van
+import { addCartItem } from '../../features/cart/CartSlice';
 
 const ProductCard = ({ product }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const dispatch = useDispatch();
 
-  const backendUrl = (process.env.REACT_APP_API_URL || 'http://localhost:3000').replace(/\/$/, '');
-
+  // Images are served from Netlify public (/products/...), so keep them relative.
+  // (If you ever switch back to backend storage, you can extend this logic.)
   const imagePath = product.image
     ? product.image.startsWith('/')
       ? product.image
       : `/${product.image}`
     : null;
 
-  const imageUrl = imagePath
-    ? imagePath.startsWith('/products/')
-      ? imagePath
-      : `${backendUrl}${imagePath}`
-    : 'https://via.placeholder.com/300x300?text=No+Image';
+  const imageUrl = imagePath || 'https://via.placeholder.com/300x300?text=No+Image';
 
   const handleAddToCart = () => {
     dispatch(addCartItem({ productId: product.id, quantity: 1 }));

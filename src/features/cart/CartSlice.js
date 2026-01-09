@@ -4,32 +4,46 @@ import cartApi from '../../apis/cart.js';
 
 // --- Async thunks ---
 export const fetchCart = createAsyncThunk('cart/fetchCart', async () => {
-  // Expected to return either:
-  // 1) Array of items
-  // 2) { cartId, items }
-  return await cartApi.getCart();
+  return await cartApi.getCart(); // returns { success, data }
 });
 
 export const addCartItem = createAsyncThunk(
   'cart/addItem',
   async ({ productId, quantity = 1 }, thunkAPI) => {
     const state = thunkAPI.getState();
-    const cartId = state.cart.cartId;
-    const response = await cartApi.addItem(cartId, productId, quantity);
-    return response;
+    let cartId = state.cart.cartId;
+
+    // If cartId missing, fetch cart and extract it from payload.data
+    if (!cartId) {
+      const cartResp = await cartApi.getCart(); // { success, data }
+      const cartData = cartResp?.data;
+
+      cartId = cartData?.cartId ?? cartData?.id ?? null;
+
+      if (!cartId) {
+        throw new Error('Cart ID is missing from GET /cart response.');
+      }
+
+      thunkAPI.dispatch(setCartId(cartId));
+      // Optional: also hydrate items if present
+      if (Array.isArray(cartData?.items)) {
+        thunkAPI.dispatch(setCartItems(cartData.items));
+      }
+    }
+
+    return await cartApi.addItem(cartId, productId, quantity); // returns { success, data }
   }
 );
 
 export const updateCartItem = createAsyncThunk(
   'cart/updateItem',
   async ({ cartItemId, quantity }) => {
-    const response = await cartApi.updateItem(cartItemId, quantity);
-    return response;
+    return await cartApi.updateItem(cartItemId, quantity); // returns { success, data }
   }
 );
 
 export const removeCartItem = createAsyncThunk('cart/removeItem', async cartItemId => {
-  const response = await cartApi.removeItem(cartItemId);
+  const response = await cartApi.removeItem(cartItemId); // returns { success, data }
   return { cartItemId, ...response };
 });
 
@@ -51,6 +65,9 @@ const cartSlice = createSlice({
     setCartId: (state, action) => {
       state.cartId = action.payload ?? state.cartId;
     },
+    setCartItems: (state, action) => {
+      state.items = Array.isArray(action.payload) ? action.payload : state.items;
+    },
   },
   extraReducers: builder => {
     builder
@@ -62,15 +79,17 @@ const cartSlice = createSlice({
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.loading = false;
 
-        // Support both payload shapes:
-        // - array: items
-        // - object: { cartId, items }
-        if (Array.isArray(action.payload)) {
-          state.items = action.payload;
-        } else {
-          state.cartId = action.payload?.cartId ?? state.cartId;
-          state.items = action.payload?.items ?? [];
+        const payload = action.payload; // { success, data }
+        const cartData = payload?.data;
+
+        // cartData can be { cartId, items } OR just items array
+        if (Array.isArray(cartData)) {
+          state.items = cartData;
+          return;
         }
+
+        state.cartId = cartData?.cartId ?? cartData?.id ?? state.cartId;
+        state.items = cartData?.items ?? [];
       })
       .addCase(fetchCart.rejected, (state, action) => {
         state.loading = false;
@@ -78,70 +97,64 @@ const cartSlice = createSlice({
       })
 
       // addCartItem
+      .addCase(addCartItem.rejected, (state, action) => {
+        state.error = action.error?.message || 'Failed to add item to cart';
+      })
       .addCase(addCartItem.fulfilled, (state, action) => {
-        const payload = action.payload;
+        const payload = action.payload; // { success, data }
+        const data = payload?.data;
 
-        // If API returns { cartId, item } or { cartId, items }, handle it
-        if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
-          state.cartId = payload.cartId ?? state.cartId;
-
-          if (Array.isArray(payload.items)) {
-            state.items = payload.items;
-            return;
-          }
-
-          const item = payload.item ?? payload;
-          const existing = state.items.find(i => i.id === item.id);
-
-          if (existing) {
-            // Prefer API payload quantity if provided
-            existing.quantity = item.quantity ?? existing.quantity + 1;
-          } else {
-            state.items.push(item);
-          }
-
+        // If API returns { cartId, items }
+        if (data && typeof data === 'object' && Array.isArray(data.items)) {
+          state.cartId = data.cartId ?? data.id ?? state.cartId;
+          state.items = data.items;
           return;
         }
 
-        // If API returns a single cart item
-        const existing = state.items.find(i => i.id === payload?.id);
+        // If API returns a single cart item in data
+        const item = data ?? null;
+        if (!item) return;
+
+        const existing = state.items.find(i => i.id === item.id);
         if (existing) {
-          existing.quantity = payload.quantity ?? existing.quantity + 1;
-        } else if (payload) {
-          state.items.push(payload);
+          existing.quantity = item.quantity ?? existing.quantity;
+        } else {
+          state.items.push(item);
         }
       })
 
       // updateCartItem
       .addCase(updateCartItem.fulfilled, (state, action) => {
-        const payload = action.payload;
+        const payload = action.payload; // { success, data }
+        const data = payload?.data;
 
-        // If API returns { items }, replace whole list
-        if (payload && typeof payload === 'object' && Array.isArray(payload.items)) {
-          state.items = payload.items;
-          state.cartId = payload.cartId ?? state.cartId;
+        if (data && typeof data === 'object' && Array.isArray(data.items)) {
+          state.cartId = data.cartId ?? data.id ?? state.cartId;
+          state.items = data.items;
           return;
         }
 
-        // If API returns updated item
-        const index = state.items.findIndex(item => item.id === payload?.id);
-        if (index !== -1) state.items[index] = payload;
+        const updated = data ?? null;
+        if (!updated) return;
+
+        const index = state.items.findIndex(i => i.id === updated.id);
+        if (index !== -1) state.items[index] = updated;
       })
 
       // removeCartItem
       .addCase(removeCartItem.fulfilled, (state, action) => {
         state.items = state.items.filter(item => item.id !== action.payload.cartItemId);
 
-        // If API returns updated items, prefer that
-        if (action.payload && Array.isArray(action.payload.items)) {
-          state.items = action.payload.items;
-          state.cartId = action.payload.cartId ?? state.cartId;
+        const data = action.payload?.data;
+        if (data && typeof data === 'object' && Array.isArray(data.items)) {
+          state.cartId = data.cartId ?? data.id ?? state.cartId;
+          state.items = data.items;
         }
       });
   },
 });
 
-export const { clearCart, setCartId } = cartSlice.actions;
+export const { clearCart, setCartId, setCartItems } = cartSlice.actions;
 
 // --- Selectors ---
 export const selectCartId = state => state.cart.cartId;
