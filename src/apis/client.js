@@ -1,7 +1,7 @@
 // src/apis/client.js
 import axios from 'axios';
 
-const API_HOST = (process.env.REACT_APP_API_URL || 'http://localhost:3000').replace(/\/$/, '');
+const API_HOST = (process.env.REACT_APP_API_URL || 'http://localhost:3001').replace(/\/$/, '');
 
 const client = axios.create({
   baseURL: `${API_HOST}/api`,

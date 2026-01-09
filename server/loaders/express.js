@@ -31,13 +31,24 @@ const __dirname = path.dirname(__filename);
 const expressLoader = () => {
   const app = express();
 
-  console.log('SESSION_SECRET loaded:', config.sessionSecret);
+  // ✅ Proxy mögött (Render) ettől lesz jó a secure cookie
+  app.set('trust proxy', 1);
+
+  // Debug (ha kell, hagyhatod ideiglenesen)
+  console.log('NODE_ENV:', config.nodeEnv);
+  console.log('CLIENT_URL:', config.clientUrl);
+  console.log('SESSION_SECRET loaded:', Boolean(config.sessionSecret));
 
   // Security headers
   app.use(helmet());
 
-  // CORS
-  app.use(cors({ origin: config.clientUrl, credentials: true }));
+  // ✅ CORS: origin NE legyen '*', és credentials legyen true
+  app.use(
+    cors({
+      origin: config.clientUrl, // pl. https://xxx.netlify.app
+      credentials: true,
+    })
+  );
 
   // Logger
   app.use(morgan('dev'));
@@ -60,16 +71,25 @@ const expressLoader = () => {
   // Cookies
   app.use(cookieParser());
 
+  // ✅ Cross-site felismerés: ha nem localhost a clientUrl, akkor cookie "none+secure"
+  const isCrossSite =
+    typeof config.clientUrl === 'string' &&
+    config.clientUrl.length > 0 &&
+    !config.clientUrl.includes('localhost') &&
+    !config.clientUrl.includes('127.0.0.1');
+
   // Session
   app.use(
     session({
       secret: config.sessionSecret || 'dev_secret_for_testing',
       resave: false,
-      saveUninitialized: true,
+      // ✅ fontos: csak akkor hozzon létre sessiont, ha tényleg használtad
+      saveUninitialized: false,
       cookie: {
-        secure: config.nodeEnv === 'production',
         httpOnly: true,
-        sameSite: config.nodeEnv === 'production' ? 'none' : 'lax',
+        // ✅ cross-site esetén kötelező a secure + sameSite none
+        secure: isCrossSite,
+        sameSite: isCrossSite ? 'none' : 'lax',
         maxAge: 1000 * 60 * 60 * 24, // 1 nap
       },
     })
@@ -90,7 +110,7 @@ const expressLoader = () => {
   const csrfProtection = csurf({ cookie: true });
   app.use(csrfProtection);
 
-  // CSRF token endpoint (CSRF mögött értelmes)
+  // CSRF token endpoint
   app.get('/api/csrf-token', (req, res) => {
     res.json({ csrfToken: req.csrfToken() });
   });
@@ -103,7 +123,7 @@ const expressLoader = () => {
   // Swagger UI
   setupSwagger(app);
 
-  // Error Middleware (minden route után)
+  // Error Middleware
   app.use(errorMiddleware);
 
   return app;
