@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
 
-// JWT ellenőrző middleware
+// Kötelező JWT
 const protect = (req, res, next) => {
   let token;
 
@@ -22,7 +22,7 @@ const protect = (req, res, next) => {
   }
 };
 
-// Admin ellenőrző middleware
+// Admin only
 const protectAdmin = (req, res, next) => {
   if (!req.user || !req.user.isAdmin) {
     return res.status(403).json({ success: false, message: 'Forbidden, admin only' });
@@ -30,5 +30,21 @@ const protectAdmin = (req, res, next) => {
   next();
 };
 
-// Default export objektum
-export default { protect, protectAdmin };
+// ✅ OPTIONAL JWT (cart-hoz)
+const optionalProtect = (req, res, next) => {
+  const header = req.headers.authorization;
+
+  if (header && header.startsWith('Bearer')) {
+    try {
+      const token = header.split(' ')[1];
+      const decoded = jwt.verify(token, config.jwtSecret);
+      req.user = decoded;
+    } catch (err) {
+      req.user = null; // rossz token → anonként megy tovább
+    }
+  }
+
+  next();
+};
+
+export default { protect, protectAdmin, optionalProtect };

@@ -15,6 +15,7 @@ import { fileURLToPath } from 'url';
 import userRoutes from '../routes/userRoutes.js';
 import productRoutes from '../routes/productRoutes.js';
 import cartRoutes from '../routes/cartRoutes.js';
+import cartItemRoutes from '../routes/cartItemRoutes.js';
 import orderRoutes from '../routes/orderRoutes.js';
 import paymentRoutes from '../routes/paymentRoutes.js';
 
@@ -98,6 +99,7 @@ const expressLoader = () => {
   app.use('/api/users', userRoutes);
   app.use('/api/products', productRoutes);
   app.use('/api/cart', cartRoutes);
+  app.use('/api/cart/items', cartItemRoutes);
   app.use('/api/orders', orderRoutes);
   app.use('/api/payments', paymentRoutes);
 
