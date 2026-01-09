@@ -69,6 +69,7 @@ const expressLoader = () => {
       cookie: {
         secure: config.nodeEnv === 'production',
         httpOnly: true,
+        sameSite: config.nodeEnv === 'production' ? 'none' : 'lax',
         maxAge: 1000 * 60 * 60 * 24, // 1 nap
       },
     })
