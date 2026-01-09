@@ -8,26 +8,41 @@ const normalize = (resp) => ({
   message: resp?.message ?? null,
 });
 
+const saveCartIdIfPresent = (normalized) => {
+  const id = normalized?.data?.id ?? normalized?.data?.cartId ?? null;
+  if (id) localStorage.setItem('cartId', String(id));
+};
+
 const cartApi = {
   async getCart() {
     const { data } = await client.get('/cart');
-    return normalize(data);
+    const normalized = normalize(data);
+    // ✅ ha a backend visszaad id-t, tartsuk szinkronban
+    saveCartIdIfPresent(normalized);
+    return normalized;
   },
 
-  // ✅ No cartId param: backend uses user or session cart
+  // ✅ cartId-t elmentjük, hogy a client interceptor tudja küldeni x-cart-id headerben
   async addItem(productId, quantity) {
     const { data } = await client.post('/cart/items', { productId, quantity });
-    return normalize(data);
+    const normalized = normalize(data);
+    saveCartIdIfPresent(normalized);
+    return normalized;
   },
 
   async updateItem(cartItemId, quantity) {
     const { data } = await client.put(`/cart/items/${cartItemId}`, { quantity });
-    return normalize(data);
+    const normalized = normalize(data);
+    saveCartIdIfPresent(normalized);
+    return normalized;
   },
 
   async removeItem(cartItemId) {
     const { data } = await client.delete(`/cart/items/${cartItemId}`);
-    return normalize(data);
+    const normalized = normalize(data);
+    // ha üresre üríted a cartot, ettől még lehet ugyanaz az id — itt nem törlünk automatikusan
+    saveCartIdIfPresent(normalized);
+    return normalized;
   },
 };
 
