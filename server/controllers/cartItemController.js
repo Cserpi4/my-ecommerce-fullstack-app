@@ -11,6 +11,9 @@ const CartItemController = {
         return res.status(400).json({ success: false, error: "productId is required" });
       }
 
+      const qtyRaw = Number(quantity);
+      const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? qtyRaw : 1;
+
       // Ensure cart exists (session + DB)
       let cartId = req.session?.cartId || null;
 
@@ -31,12 +34,12 @@ const CartItemController = {
 
       if (existing.rows.length > 0) {
         const existingId = existing.rows[0].id;
-        await pool.query(
-          `UPDATE cart_items SET quantity = quantity + $1 WHERE id=$2`,
-          [Number(quantity) || 1, existingId]
-        );
+        await pool.query(`UPDATE cart_items SET quantity = quantity + $1 WHERE id=$2`, [
+          qty,
+          existingId,
+        ]);
       } else {
-        await CartItemModel.add(cartId, productId, Number(quantity) || 1);
+        await CartItemModel.add(cartId, productId, qty);
       }
 
       const items = await CartItemModel.getByCartId(cartId);
@@ -50,7 +53,7 @@ const CartItemController = {
         },
       });
     } catch (error) {
-      handleError(res, error, "Failed to add item to cart");
+      return ErrorHandling.handleError(res, error, "Failed to add item to cart");
     }
   },
 
@@ -82,7 +85,7 @@ const CartItemController = {
         },
       });
     } catch (error) {
-      handleError(res, error, "Failed to update cart item");
+      return ErrorHandling.handleError(res, error, "Failed to update cart item");
     }
   },
 
@@ -108,7 +111,7 @@ const CartItemController = {
         },
       });
     } catch (error) {
-      handleError(res, error, "Failed to remove cart item");
+      return ErrorHandling.handleError(res, error, "Failed to remove cart item");
     }
   },
 };
