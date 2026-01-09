@@ -21,7 +21,7 @@ export const addCartItem = createAsyncThunk(
       cartId = cartData?.cartId ?? cartData?.id ?? null;
 
       if (!cartId) {
-        throw new Error('Cart ID is missing from GET /cart response.');
+        cartId = null;
       }
 
       thunkAPI.dispatch(setCartId(cartId));
