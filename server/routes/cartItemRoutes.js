@@ -1,14 +1,14 @@
-import express from 'express';
-import cartItemController from '../controllers/cartItemController.js';
-import authMiddleware from '../middlewares/authMiddleware.js';
+import express from "express";
+import CartItemController from "../controllers/cartItemController.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// ✅ anon is mehet, ha van token akkor req.user is lesz
+// anon is mehet, token esetén req.user beáll
 router.use(authMiddleware.optionalProtect);
 
-router.post('/', cartItemController.addItem);
-router.put('/:cartItemId', cartItemController.updateItem);
-router.delete('/:cartItemId', cartItemController.removeItem);
+router.post("/", CartItemController.addItem);
+router.put("/:cartItemId", CartItemController.updateItem);
+router.delete("/:cartItemId", CartItemController.removeItem);
 
 export default router;
