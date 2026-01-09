@@ -5,13 +5,10 @@ const router = express.Router();
 
 /*
   Cart flow:
-  - GET    /api/cart        → user cart vagy anon session cart
-  - POST   /api/cart/items → item hozzáadás (cart automatikusan létrejön)
-  - DELETE /api/cart/items/:cartItemId → item törlés
+  - GET /api/cart → user cart vagy anon session cart
+  (Items CRUD külön routerben: /api/cart/items)
 */
 
 router.get('/', cartController.getUserCart);
-router.post('/items', cartController.addItem);
-router.delete('/items/:cartItemId', cartController.removeItem);
 
 export default router;
