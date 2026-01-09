@@ -1,8 +1,8 @@
-// server/middleware/errorMiddleware.js
-import { formatError } from '../utils/errorHandling.js';
+// server/middlewares/errorMiddleware.js
+import ErrorHandling from '../utils/errorHandling.js';
 
 const errorMiddleware = (err, req, res, _next) => {
-  const errorResponse = formatError(err);
+  const errorResponse = ErrorHandling.formatError(err);
 
   // Log
   console.error(`[${err.statusCode || 500}] ${err.message}`);
