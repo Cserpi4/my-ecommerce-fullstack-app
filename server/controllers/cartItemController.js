@@ -1,4 +1,4 @@
-import CartItemModel from "../models/CartItemModel.js";
+import CartItemModel from "../models/cartItemModel.js";
 import pool from "../config/db.js";
 import handleError from "../utils/errorHandling.js";
 
