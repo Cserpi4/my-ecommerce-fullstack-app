@@ -80,7 +80,7 @@ const expressLoader = () => {
   // ✅ CSRF védelem — Stripe/Payment route kivétele
   const csrfProtection = csurf({ cookie: true });
   app.use((req, res, next) => {
-    if (req.path.startsWith('/api/payments')) {
+    if (req.path.startsWith('/api/payments') || req.path.startsWith('/api/cart')) {
       return next(); // Kihagyjuk a fizetési route-ot
     }
     return csrfProtection(req, res, next);
