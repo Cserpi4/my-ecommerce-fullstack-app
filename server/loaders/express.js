@@ -36,7 +36,7 @@ const expressLoader = () => {
   // Security headers
   app.use(helmet());
 
-  // CORS (A config.clientUrl-nek http://localhost:3001-re kell mutatnia)
+  // CORS
   app.use(cors({ origin: config.clientUrl, credentials: true }));
 
   // Logger
@@ -46,8 +46,7 @@ const expressLoader = () => {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Statikus fájlok kiszolgálása a storage mappából
-  // 🛑 Fix: CORS + CORP headerek a képekhez
+  // Static files
   app.use(
     '/storage',
     (req, res, next) => {
@@ -78,12 +77,17 @@ const expressLoader = () => {
   // Rate limiting
   app.use(rateLimitPkg({ windowMs: 15 * 60 * 1000, max: 100 }));
 
-  // ✅ CSRF védelem — Stripe/Payment route kivétele
+  // ✅ CSRF védelem — Payments + Cart teljes kivétele (stabil: originalUrl)
   const csrfProtection = csurf({ cookie: true });
+
   app.use((req, res, next) => {
-    if (req.path.startsWith('/api/payments') || req.path.startsWith('/api/cart')) {
-      return next(); // Kihagyjuk a fizetési route-ot
+    const url = req.originalUrl || req.url || '';
+
+    // Skip CSRF for cart + payments (needed for cross-origin Netlify ↔ Render)
+    if (url.startsWith('/api/payments') || url.startsWith('/api/cart')) {
+      return next();
     }
+
     return csrfProtection(req, res, next);
   });
 
@@ -106,7 +110,7 @@ const expressLoader = () => {
   // Swagger UI
   setupSwagger(app);
 
-  // 💥 Error Middleware (minden route után)
+  // Error Middleware (minden route után)
   app.use(errorMiddleware);
 
   return app;
