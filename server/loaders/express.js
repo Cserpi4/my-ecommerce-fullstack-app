@@ -85,11 +85,12 @@ const expressLoader = () => {
       resave: false,
       // ✅ fontos: csak akkor hozzon létre sessiont, ha tényleg használtad
       saveUninitialized: false,
+      proxy: true,
       cookie: {
         httpOnly: true,
         // ✅ cross-site esetén kötelező a secure + sameSite none
-        secure: isCrossSite,
-        sameSite: isCrossSite ? 'none' : 'lax',
+        secure: true,
+        sameSite: 'none',
         maxAge: 1000 * 60 * 60 * 24, // 1 nap
       },
     })

@@ -3,17 +3,31 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import cartApi from '../../apis/cart.js';
 
 // --- Async thunks ---
+
 export const fetchCart = createAsyncThunk('cart/fetchCart', async () => {
-  return await cartApi.getCart(); // { success, data } where data is cart or null
+  // cartApi.getCart() -> axios response vagy { success, cart }
+  return await cartApi.getCart();
 });
 
 export const addCartItem = createAsyncThunk(
   'cart/addItem',
   async ({ productId, quantity = 1 }, thunkAPI) => {
-    // ✅ session/user cart: no cartId needed
     const resp = await cartApi.addItem(productId, quantity);
 
-    // ✅ always re-hydrate full cart after mutation (source of truth)
+    // 🔥 CART ID MENTÉS (cookie nélkül is működik)
+    const cartId =
+      resp?.data?.cart?.id ??
+      resp?.cart?.id ??
+      resp?.data?.cartId ??
+      resp?.cartId ??
+      null;
+
+    if (cartId) {
+      localStorage.setItem('cartId', String(cartId));
+      thunkAPI.dispatch(setCartId(cartId));
+    }
+
+    // 🔄 mindig újrahúzzuk a kosarat
     await thunkAPI.dispatch(fetchCart());
 
     return resp;
@@ -39,12 +53,15 @@ export const removeCartItem = createAsyncThunk(
 );
 
 // --- Initial state ---
+
 const initialState = {
-  cartId: null,
+  cartId: localStorage.getItem('cartId'),
   items: [],
   loading: false,
   error: null,
 };
+
+// --- Slice ---
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -53,9 +70,13 @@ const cartSlice = createSlice({
     clearCart: state => {
       state.items = [];
       state.cartId = null;
+      localStorage.removeItem('cartId');
     },
     setCartId: (state, action) => {
-      state.cartId = action.payload ?? state.cartId;
+      if (action.payload) {
+        state.cartId = action.payload;
+        localStorage.setItem('cartId', String(action.payload));
+      }
     },
     setCartItems: (state, action) => {
       state.items = Array.isArray(action.payload) ? action.payload : state.items;
@@ -63,7 +84,7 @@ const cartSlice = createSlice({
   },
   extraReducers: builder => {
     builder
-      // fetchCart
+      // --- fetchCart ---
       .addCase(fetchCart.pending, state => {
         state.loading = true;
         state.error = null;
@@ -71,17 +92,27 @@ const cartSlice = createSlice({
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.loading = false;
 
-        const payload = action.payload; // { success, data }
-        const cartData = payload?.data;
+        const payload = action.payload;
 
-        // If backend returns null/empty for anon without session yet
+        // többféle API shape kezelése
+        const cartData =
+          payload?.data?.cart ??
+          payload?.data ??
+          payload?.cart ??
+          null;
+
         if (!cartData || typeof cartData !== 'object') {
-          state.cartId = state.cartId ?? null;
           state.items = [];
           return;
         }
 
-        state.cartId = cartData?.cartId ?? cartData?.id ?? state.cartId;
+        const newCartId = cartData?.id ?? cartData?.cartId ?? null;
+
+        if (newCartId) {
+          state.cartId = newCartId;
+          localStorage.setItem('cartId', String(newCartId));
+        }
+
         state.items = Array.isArray(cartData?.items) ? cartData.items : [];
       })
       .addCase(fetchCart.rejected, (state, action) => {
@@ -89,10 +120,7 @@ const cartSlice = createSlice({
         state.error = action.error?.message || 'Failed to fetch cart';
       })
 
-      // addCartItem / updateCartItem / removeCartItem
-      .addCase(addCartItem.pending, state => {
-        state.error = null;
-      })
+      // --- mutation hibák ---
       .addCase(addCartItem.rejected, (state, action) => {
         state.error = action.error?.message || 'Failed to add item to cart';
       })
@@ -105,9 +133,10 @@ const cartSlice = createSlice({
   },
 });
 
+// --- Exports ---
+
 export const { clearCart, setCartId, setCartItems } = cartSlice.actions;
 
-// --- Selectors ---
 export const selectCartId = state => state.cart.cartId;
 export const selectCartItems = state => state.cart.items;
 export const selectCartLoading = state => state.cart.loading;
@@ -115,7 +144,7 @@ export const selectCartError = state => state.cart.error;
 
 export const selectCartTotal = state =>
   state.cart.items.reduce((sum, item) => {
-    const price = Number(item.price ?? item.product?.price ?? 0);
+    const price = Number(item.unit_price ?? item.price ?? 0);
     const qty = Number(item.quantity ?? 1);
     return sum + price * qty;
   }, 0);

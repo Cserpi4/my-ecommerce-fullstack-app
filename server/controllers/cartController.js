@@ -8,6 +8,11 @@ const computeTotal = (items) =>
     return sum + price * qty;
   }, 0);
 
+const toIntOrNull = (v) => {
+  const n = Number(v);
+  return Number.isInteger(n) && n > 0 ? n : null;
+};
+
 const cartController = {
   async getUserCart(req, res, next) {
     try {
@@ -26,8 +31,11 @@ const cartController = {
         });
       }
 
-      // ANON (session)
-      const cartId = req.session?.cartId ?? null;
+      // ✅ ANON: session + header fallback (cookie nélkül is működik)
+      const headerCartId = toIntOrNull(req.get('x-cart-id'));
+      const sessionCartId = toIntOrNull(req.session?.cartId);
+
+      const cartId = sessionCartId ?? headerCartId;
 
       if (!cartId) {
         return res.json({
@@ -36,12 +44,16 @@ const cartController = {
         });
       }
 
+      // opcionális: ha headerből jött, próbáljuk sessionbe is betenni (ha a cookie később mégis működik)
+      if (!sessionCartId && req.session) {
+        req.session.cartId = cartId;
+      }
+
       let items = [];
       try {
         items = await CartItemModel.getByCartId(cartId);
       } catch (e) {
-        // ha árva lett a session cartId
-        req.session.cartId = null;
+        if (req.session) req.session.cartId = null;
         return res.json({
           success: true,
           cart: { id: null, items: [], total: 0, isAnonymous: true },
