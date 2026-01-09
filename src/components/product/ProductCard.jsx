@@ -1,26 +1,30 @@
 import React, { useState } from 'react';
 import './ProductCard.css';
 import { Maximize2 } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { addCartItem } from '../../features/cart/CartSlice'; // <-- igazítsd, ha máshol van
 
 const ProductCard = ({ product }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const dispatch = useDispatch();
 
-  // Backend alap URL normalizálva: levágjuk a trailing slash-t, ha van
   const backendUrl = (process.env.REACT_APP_API_URL || 'http://localhost:3000').replace(/\/$/, '');
 
-  // Biztosítjuk, hogy az image mindig '/'-al kezdődjön
   const imagePath = product.image
     ? product.image.startsWith('/')
       ? product.image
       : `/${product.image}`
     : null;
 
-  // Ha nincs image, placeholdert adunk
   const imageUrl = imagePath
     ? imagePath.startsWith('/products/')
       ? imagePath
       : `${backendUrl}${imagePath}`
     : 'https://via.placeholder.com/300x300?text=No+Image';
+
+  const handleAddToCart = () => {
+    dispatch(addCartItem({ productId: product.id, quantity: 1 }));
+  };
 
   return (
     <>
@@ -42,6 +46,10 @@ const ProductCard = ({ product }) => {
         {product.price !== undefined && (
           <p className="product-price">${Number(product.price).toFixed(2)}</p>
         )}
+
+        <button className="add-to-cart-btn" onClick={handleAddToCart}>
+          Add to cart
+        </button>
       </div>
 
       {isFullscreen && (
@@ -62,6 +70,10 @@ const ProductCard = ({ product }) => {
                 <p className="info-price">${Number(product.price).toFixed(2)}</p>
               )}
             </div>
+
+            <button className="add-to-cart-btn" onClick={handleAddToCart}>
+              Add to cart
+            </button>
           </div>
         </div>
       )}

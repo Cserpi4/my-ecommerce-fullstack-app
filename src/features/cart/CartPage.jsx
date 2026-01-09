@@ -1,52 +1,40 @@
-import React, { useState, useEffect } from 'react';
+// src/features/cart/CartPage.jsx
+import React, { useEffect } from 'react';
 import { Trash2, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import './CartPage.css';
 
-// Mock data for demonstration
-const MOCK_CART_ITEMS = [
-  {
-    id: 1,
-    name: 'Defending Throw-In Setup',
-    price: 4.99,
-    quantity: 1,
-    image: 'http://localhost:3000/storage/attacking_throwin_final_01.jpg',
-  },
-  {
-    id: 2,
-    name: 'Attacking Corner Routine',
-    price: 6.49,
-    quantity: 2,
-    image: 'http://localhost:3000/storage/attacking_corner_01.jpg',
-  },
-  {
-    id: 3,
-    name: 'Free-Kick Defensive Wall',
-    price: 5.99,
-    quantity: 1,
-    image: 'http://localhost:3000/storage/defending_freekick_01.jpg',
-  },
-];
+import {
+  fetchCart,
+  updateCartItem,
+  removeCartItem,
+  selectCartItems,
+  selectCartLoading,
+  selectCartError,
+  selectCartTotal,
+} from './CartSlice';
 
 const CartPage = () => {
-  const [items, setItems] = useState([]);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const items = useSelector(selectCartItems);
+  const loading = useSelector(selectCartLoading);
+  const error = useSelector(selectCartError);
+  const totalPrice = useSelector(selectCartTotal);
 
   useEffect(() => {
-    setItems(MOCK_CART_ITEMS);
-  }, []);
+    dispatch(fetchCart());
+  }, [dispatch]);
 
-  const handleRemove = id => {
-    setItems(prev => prev.filter(item => item.id !== id));
+  const handleRemove = cartItemId => {
+    dispatch(removeCartItem(cartItemId));
   };
 
-  const handleQuantityChange = (id, quantity) => {
-    setItems(prev =>
-      prev.map(item => (item.id === id ? { ...item, quantity: Number(quantity) } : item))
-    );
+  const handleQuantityChange = (cartItemId, quantity) => {
+    dispatch(updateCartItem({ cartItemId, quantity: Number(quantity) }));
   };
-
-  const totalPrice = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   const handleProceedToCheckout = () => {
     navigate('/checkout', {
@@ -57,7 +45,15 @@ const CartPage = () => {
     });
   };
 
-  if (items.length === 0) {
+  if (loading) {
+    return <div className="cart-page">Loading cart...</div>;
+  }
+
+  if (error) {
+    return <div className="cart-page">Cart error: {error}</div>;
+  }
+
+  if (!items.length) {
     return (
       <div className="empty-cart">
         <ShoppingBag size={48} />
@@ -74,34 +70,48 @@ const CartPage = () => {
       <h2 className="cart-title">Your Cart</h2>
 
       <div className="cart-items">
-        {items.map(item => (
-          <div key={item.id} className="cart-item">
-            <img src={item.image} alt={item.name} className="cart-item-image" />
+        {items.map(item => {
+          // Support both item shapes:
+          // 1) flattened: { id, name, price, image, quantity }
+          // 2) nested: { id, quantity, product: { name, price, image } }
+          const name = item.name ?? item.product?.name ?? 'Item';
+          const price = Number(item.price ?? item.product?.price ?? 0);
+          const image = item.image ?? item.product?.image ?? null;
 
-            <div className="cart-item-info">
-              <h3 className="cart-item-name">{item.name}</h3>
-              <p className="cart-item-price">${item.price.toFixed(2)}</p>
+          return (
+            <div key={item.id} className="cart-item">
+              <img
+                src={image || 'https://via.placeholder.com/300x300?text=No+Image'}
+                alt={name}
+                className="cart-item-image"
+              />
 
-              <div className="cart-item-actions">
-                <input
-                  type="number"
-                  min="1"
-                  value={item.quantity}
-                  onChange={e => handleQuantityChange(item.id, e.target.value)}
-                  className="cart-item-quantity"
-                />
-                <button className="cart-item-remove" onClick={() => handleRemove(item.id)}>
-                  <Trash2 size={18} />
-                  Remove
-                </button>
+              <div className="cart-item-info">
+                <h3 className="cart-item-name">{name}</h3>
+                <p className="cart-item-price">${price.toFixed(2)}</p>
+
+                <div className="cart-item-actions">
+                  <input
+                    type="number"
+                    min="1"
+                    value={item.quantity ?? 1}
+                    onChange={e => handleQuantityChange(item.id, e.target.value)}
+                    className="cart-item-quantity"
+                  />
+
+                  <button className="cart-item-remove" onClick={() => handleRemove(item.id)}>
+                    <Trash2 size={18} />
+                    Remove
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="cart-summary">
-        <h3 className="cart-total">Total: ${totalPrice.toFixed(2)}</h3>
+        <h3 className="cart-total">Total: ${Number(totalPrice).toFixed(2)}</h3>
         <button className="checkout-button" onClick={handleProceedToCheckout}>
           Proceed to Checkout
         </button>
