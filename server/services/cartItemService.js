@@ -9,66 +9,85 @@ const toPositiveInt = (value, fallback = 1) => {
 
 const CartItemService = {
   async ensureCartId(req) {
-    // body cartId (ha küldöd) -> session -> create
-    const bodyCartId = req.body?.cartId || null;
-    let cartId = bodyCartId || req.session?.cartId || null;
+    if (!req.session) {
+      throw new Error("Session is not available on request (check session middleware order).");
+    }
+
+    let cartId = req.session.cartId || null;
 
     if (!cartId) {
       const result = await pool.query(
         `INSERT INTO carts (user_id) VALUES ($1) RETURNING id`,
         [req.user?.id || null]
       );
-      cartId = result.rows[0].id;
-      if (req.session) req.session.cartId = cartId;
+
+      cartId = result.rows[0]?.id || null;
+
+      if (!cartId) {
+        throw new Error("Failed to create cart (no id returned).");
+      }
+
+      req.session.cartId = cartId;
     }
 
     return cartId;
   },
 
+  async getCartIdByCartItemId(cartItemId) {
+    const res = await pool.query(
+      `SELECT cart_id FROM cart_items WHERE id=$1 LIMIT 1`,
+      [cartItemId]
+    );
+    return res.rows[0]?.cart_id || null;
+  },
+
   async addItem(req, productId, quantity = 1) {
+    const pid = Number(productId);
+    if (!Number.isFinite(pid)) {
+      throw new Error("Invalid productId");
+    }
+
     const cartId = await this.ensureCartId(req);
     const qty = toPositiveInt(quantity, 1);
 
-    const existing = await CartItemModel.findByCartAndProduct(cartId, productId);
+    const existing = await CartItemModel.findByCartAndProduct(cartId, pid);
 
     if (existing) {
       await CartItemModel.incrementQuantity(existing.id, qty);
     } else {
-      await CartItemModel.add(cartId, productId, qty);
+      await CartItemModel.add(cartId, pid, qty);
     }
 
     const items = await CartItemModel.getByCartId(cartId);
 
-    return {
-      cartId,
-      items,
-    };
+    return { cartId, items };
   },
 
   async updateItem(req, cartItemId, quantity) {
+    const id = Number(cartItemId);
+    if (!Number.isFinite(id)) {
+      throw new Error("Invalid cartItemId");
+    }
+
     const qty = toPositiveInt(quantity, 1);
 
-    await CartItemModel.updateQuantity(cartItemId, qty);
+    await CartItemModel.updateQuantity(id, qty);
 
-    const cartId =
-      req.session?.cartId ||
-      (await pool
-        .query(`SELECT cart_id FROM cart_items WHERE id=$1 LIMIT 1`, [cartItemId])
-        .then(r => r.rows[0]?.cart_id || null));
-
+    const cartId = req.session?.cartId || (await this.getCartIdByCartItemId(id));
     const items = cartId ? await CartItemModel.getByCartId(cartId) : [];
 
     return { cartId, items };
   },
 
   async removeItem(req, cartItemId) {
-    const cartId =
-      req.session?.cartId ||
-      (await pool
-        .query(`SELECT cart_id FROM cart_items WHERE id=$1 LIMIT 1`, [cartItemId])
-        .then(r => r.rows[0]?.cart_id || null));
+    const id = Number(cartItemId);
+    if (!Number.isFinite(id)) {
+      throw new Error("Invalid cartItemId");
+    }
 
-    await CartItemModel.remove(cartItemId);
+    const cartId = req.session?.cartId || (await this.getCartIdByCartItemId(id));
+
+    await CartItemModel.remove(id);
 
     const items = cartId ? await CartItemModel.getByCartId(cartId) : [];
 

@@ -15,9 +15,10 @@ const CartItemController = {
       return res.status(200).json({
         success: true,
         cart: {
-          items: result.items,
+          id: result.cartId ?? null,
+          items: result.items ?? [],
           total: 0,
-          isAnonymous: !req.user,
+          isAnonymous: !req.user?.id,
         },
       });
     } catch (error) {
@@ -39,9 +40,10 @@ const CartItemController = {
       return res.status(200).json({
         success: true,
         cart: {
-          items: result.items,
+          id: result.cartId ?? null,
+          items: result.items ?? [],
           total: 0,
-          isAnonymous: !req.user,
+          isAnonymous: !req.user?.id,
         },
       });
     } catch (error) {
@@ -62,9 +64,10 @@ const CartItemController = {
       return res.status(200).json({
         success: true,
         cart: {
-          items: result.items,
+          id: result.cartId ?? null,
+          items: result.items ?? [],
           total: 0,
-          isAnonymous: !req.user,
+          isAnonymous: !req.user?.id,
         },
       });
     } catch (error) {
