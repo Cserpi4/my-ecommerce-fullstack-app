@@ -35,13 +35,36 @@ const CartItemModel = {
     return res.rows[0];
   },
 
+  // 🔥 EZ A FONTOS RÉSZ — cart hydrate products táblából
   async getByCartId(cartId) {
-    const res = await pool.query(`SELECT * FROM cart_items WHERE cart_id=$1`, [cartId]);
+    const res = await pool.query(
+      `
+      SELECT
+        ci.id        AS cart_item_id,
+        ci.cart_id,
+        ci.product_id,
+        ci.quantity,
+
+        p.name       AS name,
+        p.price      AS unit_price,
+        p.image      AS image
+
+      FROM cart_items ci
+      JOIN products p ON p.id = ci.product_id
+      WHERE ci.cart_id = $1
+      ORDER BY ci.id ASC
+      `,
+      [cartId]
+    );
+
     return res.rows;
   },
 
   async remove(cartItemId) {
-    const res = await pool.query(`DELETE FROM cart_items WHERE id=$1 RETURNING *`, [cartItemId]);
+    const res = await pool.query(
+      `DELETE FROM cart_items WHERE id=$1 RETURNING *`,
+      [cartItemId]
+    );
     return res.rows[0] || null;
   },
 };
