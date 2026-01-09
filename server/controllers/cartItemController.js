@@ -1,6 +1,6 @@
 import CartItemModel from "../models/cartItemModel.js";
 import pool from "../config/db.js";
-import handleError from "../utils/errorHandling.js";
+import ErrorHandling from "../utils/errorHandling.js";
 
 const CartItemController = {
   async addItem(req, res) {

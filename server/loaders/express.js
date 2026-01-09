@@ -77,35 +77,27 @@ const expressLoader = () => {
   // Rate limiting
   app.use(rateLimitPkg({ windowMs: 15 * 60 * 1000, max: 100 }));
 
-  // ✅ CSRF védelem — Payments + Cart teljes kivétele (stabil: originalUrl)
-  const csrfProtection = csurf({ cookie: true });
-
-  app.use((req, res, next) => {
-    const url = req.originalUrl || req.url || '';
-
-    // Skip CSRF for cart + payments (needed for cross-origin Netlify ↔ Render)
-    if (url.startsWith('/api/payments') || url.startsWith('/api/cart')) {
-      return next();
-    }
-
-    return csrfProtection(req, res, next);
-  });
-
   // Health-check route
   app.get('/', (req, res) => res.send('Backend is running ✅'));
 
-  // CSRF token endpoint (frontend-hez)
+  // ✅ CSRF NÉLKÜL: cart + payments (cross-origin miatt)
+  app.use('/api/cart', cartRoutes);
+  app.use('/api/cart/items', cartItemRoutes);
+  app.use('/api/payments', paymentRoutes);
+
+  // ✅ CSRF VÉDELEM: minden másra
+  const csrfProtection = csurf({ cookie: true });
+  app.use(csrfProtection);
+
+  // CSRF token endpoint (CSRF mögött értelmes)
   app.get('/api/csrf-token', (req, res) => {
     res.json({ csrfToken: req.csrfToken() });
   });
 
-  // API Route-ok
+  // API Route-ok (CSRF mögött)
   app.use('/api/users', userRoutes);
   app.use('/api/products', productRoutes);
-  app.use('/api/cart', cartRoutes);
-  app.use('/api/cart/items', cartItemRoutes);
   app.use('/api/orders', orderRoutes);
-  app.use('/api/payments', paymentRoutes);
 
   // Swagger UI
   setupSwagger(app);

@@ -1,18 +1,37 @@
 // server/utils/errorHandling.js
-export class AppError extends Error {
+
+class AppError extends Error {
   constructor(message, statusCode = 500) {
     super(message);
     this.statusCode = statusCode;
-    this.isOperational = true; // Jelezhetjük, hogy "várt" hiba
+    this.isOperational = true;
     Error.captureStackTrace(this, this.constructor);
   }
 }
 
-// Standard hiba response formázás
-export const formatError = err => {
+const formatError = (err) => {
   return {
     status: err.statusCode || 500,
-    message: err.message || 'Internal Server Error',
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    message: err.message || "Internal Server Error",
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
   };
 };
+
+const handleError = (res, error, fallbackMessage = "Something went wrong") => {
+  const statusCode = error?.statusCode || 500;
+
+  console.error(fallbackMessage, error);
+
+  return res.status(statusCode).json({
+    success: false,
+    error: error?.message || fallbackMessage,
+  });
+};
+
+const ErrorHandling = {
+  AppError,
+  formatError,
+  handleError,
+};
+
+export default ErrorHandling;
