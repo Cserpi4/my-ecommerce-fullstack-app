@@ -7,8 +7,7 @@ const ProductCard = ({ product }) => {
 
   // Backend alap URL normalizálva: levágjuk a trailing slash-t, ha van
   const backendUrl = (
-    process.env.REACT_APP_API_URL?.replace('/api', '') ||
-    'http://localhost:3000'
+    process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3000'
   ).replace(/\/$/, '');
 
   // Biztosítjuk, hogy az image mindig '/'-al kezdődjön
@@ -20,7 +19,9 @@ const ProductCard = ({ product }) => {
 
   // Ha nincs image, placeholdert adunk
   const imageUrl = imagePath
-    ? `${backendUrl}${imagePath}`
+    ? imagePath.startsWith('/products/')
+      ? imagePath
+      : `${backendUrl}${imagePath}`
     : 'https://via.placeholder.com/300x300?text=No+Image';
 
   return (
