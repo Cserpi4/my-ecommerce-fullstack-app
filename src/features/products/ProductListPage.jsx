@@ -18,7 +18,6 @@ const ProductListPage = () => {
   if (status === 'loading') return <div className="loading">Loading products...</div>;
   if (status === 'failed') return <div className="error">{error}</div>;
 
-  // 🧩 Szöveg egységesítő – kisbetűsítés, többes szám kezelése, speciális karakterek törlése
   const normalize = str =>
     str
       ?.toLowerCase()
@@ -30,28 +29,22 @@ const ProductListPage = () => {
       .replace(/\s+/g, ' ')
       .trim();
 
-  // 🧠 Intelligens, kulcsszavas szűrés
   const filteredItems = selectedCategory
     ? items.filter(product => {
         const normName = normalize(product.name);
         const normCategory = normalize(selectedCategory);
-
-        // A kategóriát kulcsszavakra bontjuk
         const categoryWords = normCategory.split(' ');
-
-        // Minden kulcsszónak szerepelnie kell a termék nevében
         return categoryWords.every(word => normName.includes(word));
       })
     : items;
 
   return (
     <div className="product-page-layout">
-      {/* Bal oldali kategória sáv */}
       <Sidebar selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
 
-      {/* Jobb oldali terméklista */}
       <div className="product-list-page">
         <h2 className="page-title">Our Products</h2>
+
         <div className="product-list">
           {filteredItems.map(product => (
             <ProductCard key={product.id} product={product} />
