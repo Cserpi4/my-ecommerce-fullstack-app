@@ -6,9 +6,7 @@ const ProductCard = ({ product }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Backend alap URL normalizálva: levágjuk a trailing slash-t, ha van
-  const backendUrl = (
-    process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3000'
-  ).replace(/\/$/, '');
+  const backendUrl = (process.env.REACT_APP_API_URL || 'http://localhost:3000').replace(/\/$/, '');
 
   // Biztosítjuk, hogy az image mindig '/'-al kezdődjön
   const imagePath = product.image
