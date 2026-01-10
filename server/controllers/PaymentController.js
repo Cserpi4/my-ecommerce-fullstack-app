@@ -1,13 +1,67 @@
-// server/controllers/PaymentController.js  (kiegészítés)
+// server/controllers/PaymentController.js
 import paymentService from "../services/paymentService.js";
 import Stripe from "stripe";
+import config from "../config/index.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || config.stripeSecretKey, {
   apiVersion: "2024-06-20",
 });
 
 const PaymentController = {
-  // ... a meglévő metódusaiddal együtt
+  async createPayment(req, res, next) {
+    try {
+      const { orderId = null, amount, currency = "usd" } = req.body;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency,
+        automatic_payment_methods: { enabled: true },
+      });
+
+      const result = await paymentService.createPayment({
+        orderId,
+        amount,
+        currency,
+      });
+
+      res.status(201).json({
+        success: true,
+        payment: {
+          ...result,
+          client_secret: paymentIntent.client_secret,
+        },
+      });
+    } catch (err) {
+      console.error("❌ createPayment error:", err.message);
+      res.status(500).json({
+        success: false,
+        message: "Payment creation failed.",
+        error: err.message,
+      });
+    }
+  },
+
+  async getPayment(req, res, next) {
+    try {
+      const { paymentId } = req.params;
+      const payment = await paymentService.getPaymentById(paymentId);
+
+      if (!payment) {
+        return res.status(404).json({
+          success: false,
+          message: "Payment not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        payment,
+      });
+    } catch (err) {
+      console.error("❌ getPayment error:", err.message);
+      next(err);
+    }
+  },
 
   async handleStripeWebhook(req, res) {
     const sig = req.headers["stripe-signature"];
