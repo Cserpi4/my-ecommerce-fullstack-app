@@ -1,5 +1,5 @@
 import path from 'path';
-import { resizeImage, deleteImage } from '../utils/imageProcessor.js';
+import imageProcessor from "../utils/imageProcessor.js";
 
 const uploadsDir = path.resolve('server/storage/uploads');
 const processedDir = path.resolve('server/storage/processed');
