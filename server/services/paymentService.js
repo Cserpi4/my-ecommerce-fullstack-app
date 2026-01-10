@@ -1,24 +1,68 @@
-import PaymentModel from "../models/PaymentModel.js";
+// server/services/paymentService.js
 import paymentProvider from "../utils/paymentProvider.js";
+import cartService from "./cartService.js";
+import CartItemModel from "../models/CartItemModel.js";
+import PaymentModel from "../models/PaymentModel.js";
+
+const computeTotalCents = (items) =>
+  items.reduce((sum, it) => {
+    const price = Number(it.unit_price ?? it.price ?? 0);
+    const qty = Number(it.quantity ?? 0);
+    return sum + Math.round(price * 100) * qty;
+  }, 0);
 
 const paymentService = {
-  async createPayment({ orderId, amount, currency = "usd" }) {
+  async createPayment({ userId = null, cartId = null, orderId = null, currency = "usd" }) {
+    // Resolve cartId
+    let resolvedCartId = cartId;
+
+    if (userId) {
+      const cart = await cartService.getOrCreateCartByUserId(userId);
+      resolvedCartId = cart?.id ?? null;
+    }
+
+    if (!resolvedCartId) {
+      throw new Error("Missing cartId");
+    }
+
+    // Amount from cart
+    const items = await CartItemModel.getByCartId(resolvedCartId);
+    const amount = computeTotalCents(items);
+
+    if (!amount || amount <= 0) {
+      const err = new Error("Cart is empty");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // Stripe PaymentIntent
     const paymentIntent = await paymentProvider.createPaymentIntent({
       amount,
       currency,
-      metadata: { orderId },
+      metadata: {
+        cartId: String(resolvedCartId),
+        isAnonymous: userId ? "false" : "true",
+        ...(userId ? { userId: String(userId) } : {}),
+        ...(orderId ? { orderId: String(orderId) } : {}),
+      },
     });
 
-    const dbPayment = await PaymentModel.create(
+    // DB record
+    const paymentRecord = await PaymentModel.create({
       orderId,
       amount,
-      paymentIntent.method || "card",
-      paymentIntent.status
-    );
+      currency,
+      status: "pending",
+      provider: "stripe",
+      providerPaymentIntentId: paymentIntent.id,
+    });
 
     return {
-      dbPayment,
+      cartId: resolvedCartId,
+      amount,
       clientSecret: paymentIntent.client_secret,
+      payment: paymentRecord,
+      paymentIntentId: paymentIntent.id,
     };
   },
 
@@ -26,8 +70,28 @@ const paymentService = {
     return PaymentModel.getById(paymentId);
   },
 
-  async updatePaymentStatus({ paymentIntentId, status }) {
-    return PaymentModel.updateStatusByIntent(paymentIntentId, status);
+  async updatePaymentStatus(paymentIntentId, status) {
+    return PaymentModel.updateStatusByPaymentIntentId(paymentIntentId, status);
+  },
+
+  async handleStripeWebhook({ rawBody, signature }) {
+    const event = paymentProvider.verifyWebhook({
+      rawBody,
+      signature,
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    });
+
+    if (event.type === "payment_intent.succeeded") {
+      const pi = event.data.object;
+      await this.updatePaymentStatus(pi.id, "succeeded");
+    }
+
+    if (event.type === "payment_intent.payment_failed") {
+      const pi = event.data.object;
+      await this.updatePaymentStatus(pi.id, "failed");
+    }
+
+    return event;
   },
 };
 
