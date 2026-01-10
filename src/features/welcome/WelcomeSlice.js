@@ -1,14 +1,14 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  message: 'Welcome to the Football Shop App!',
+  message: "Welcome to the Football Shop App!",
 };
 
 const welcomeSlice = createSlice({
-  name: 'welcome',
+  name: "welcome",
   initialState,
   reducers: {
-    setMessage: (state, action) => {
+    setMessage(state, action) {
       state.message = action.payload;
     },
   },

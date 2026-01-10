@@ -10,7 +10,7 @@ const PaymentModel = {
       `,
       [orderId, amount, method, status]
     );
-    return rows[0];
+    return rows[0] || null;
   },
 
   async getByOrderId(orderId) {
@@ -23,7 +23,7 @@ const PaymentModel = {
       status,
       paymentId,
     ]);
-    return rows[0];
+    return rows[0] || null;
   },
 };
 

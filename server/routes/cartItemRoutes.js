@@ -1,10 +1,9 @@
-import express from "express";
-import CartItemController from "../controllers/cartItemController.js";
+import { Router } from "express";
+import CartItemController from "../controllers/CartItemController.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 
-const router = express.Router();
+const router = Router();
 
-// anon is mehet, token esetén req.user beáll
 router.use(authMiddleware.optionalProtect);
 
 router.post("/", CartItemController.addItem);

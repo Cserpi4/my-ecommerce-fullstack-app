@@ -1,27 +1,29 @@
-import express from 'express';
-import productController from '../controllers/productController.js';
-import fileUpload from '../middlewares/fileUpload.js'; // multer middleware
-import authMiddleware from '../middlewares/authMiddleware.js';
+import { Router } from "express";
+import ProductController from "../controllers/ProductController.js";
+import fileUpload from "../middlewares/fileUpload.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
 
-const router = express.Router();
+const router = Router();
 
-// Mindenki számára elérhető termékek
-router.get('/', productController.getProducts);
-router.get('/:id', productController.getProduct);
+// Public
+router.get("/", ProductController.getProducts);
+router.get("/:id", ProductController.getProduct);
 
-// Admin jogosultság szükséges a CRUD műveletekhez
+// Admin
 router.post(
-  '/',
+  "/",
   authMiddleware.protectAdmin,
-  fileUpload.single('image'),
-  productController.createProduct
+  fileUpload.single("image"),
+  ProductController.createProduct
 );
+
 router.put(
-  '/:id',
+  "/:id",
   authMiddleware.protectAdmin,
-  fileUpload.single('image'),
-  productController.updateProduct
+  fileUpload.single("image"),
+  ProductController.updateProduct
 );
-router.delete('/:id', authMiddleware.protectAdmin, productController.deleteProduct);
+
+router.delete("/:id", authMiddleware.protectAdmin, ProductController.deleteProduct);
 
 export default router;

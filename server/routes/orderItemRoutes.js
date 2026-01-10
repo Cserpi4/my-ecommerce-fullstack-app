@@ -1,12 +1,13 @@
-import express from 'express';
-import orderItemController from '../controllers/orderItemController.js';
-import authMiddleware from '../middlewares/authMiddleware.js';
+import { Router } from "express";
+import OrderItemController from "../controllers/OrderItemController.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
 
-const router = express.Router();
+const router = Router();
+
 router.use(authMiddleware);
 
-router.get('/:orderId', orderItemController.getOrderItems);
-router.post('/', orderItemController.addOrderItem);
-router.delete('/:orderItemId', orderItemController.removeOrderItem);
+router.get("/:orderId", OrderItemController.getOrderItems);
+router.post("/", OrderItemController.addOrderItem);
+router.delete("/:orderItemId", OrderItemController.removeOrderItem);
 
 export default router;

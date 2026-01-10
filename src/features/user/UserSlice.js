@@ -1,6 +1,5 @@
-// src/features/user/UserSlice.js
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchUserProfile, updateUserProfile } from '../../apis/user.js';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import userApi from "../../apis/userApi.js";
 
 const initialState = {
   user: null,
@@ -8,43 +7,43 @@ const initialState = {
   error: null,
 };
 
-// Async thunks
+// --- Async thunks ---
 export const getUserProfile = createAsyncThunk(
-  'user/getProfile',
+  "user/getProfile",
   async (_, { rejectWithValue }) => {
     try {
-      return await fetchUserProfile();
+      return await userApi.fetchUserProfile();
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to fetch profile');
+      return rejectWithValue(err.response?.data?.error || "Failed to fetch profile");
     }
   }
 );
 
 export const updateProfile = createAsyncThunk(
-  'user/updateProfile',
+  "user/updateProfile",
   async (data, { rejectWithValue }) => {
     try {
-      return await updateUserProfile(data);
+      return await userApi.updateUserProfile(data);
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to update profile');
+      return rejectWithValue(err.response?.data?.error || "Failed to update profile");
     }
   }
 );
 
 const userSlice = createSlice({
-  name: 'user',
+  name: "user",
   initialState,
   reducers: {
-    resetUser: state => {
+    resetUser(state) {
       state.user = null;
       state.loading = false;
       state.error = null;
     },
   },
-  extraReducers: builder => {
+  extraReducers: (builder) => {
     builder
-      // get profile
-      .addCase(getUserProfile.pending, state => {
+      // --- get profile
+      .addCase(getUserProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -56,8 +55,9 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // update profile
-      .addCase(updateProfile.pending, state => {
+
+      // --- update profile
+      .addCase(updateProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
       })

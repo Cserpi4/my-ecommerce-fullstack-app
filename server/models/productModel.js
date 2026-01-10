@@ -9,7 +9,7 @@ const ProductModel = {
     `;
     const values = [name, description, price, imageUrl, stock];
     const { rows } = await pool.query(query, values);
-    return rows[0];
+    return rows[0] || null;
   },
 
   async findAll() {
@@ -19,7 +19,7 @@ const ProductModel = {
 
   async findById(id) {
     const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
-    return rows[0];
+    return rows[0] || null;
   },
 
   async update(id, { name, description, price, imageUrl, stock }) {
@@ -35,12 +35,12 @@ const ProductModel = {
     `;
     const values = [name, description, price, imageUrl, stock, id];
     const { rows } = await pool.query(query, values);
-    return rows[0];
+    return rows[0] || null;
   },
 
   async delete(id) {
     const { rows } = await pool.query('DELETE FROM products WHERE id = $1 RETURNING *;', [id]);
-    return rows[0];
+    return rows[0] || null;
   },
 };
 

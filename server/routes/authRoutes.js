@@ -1,27 +1,17 @@
-import express from 'express';
-import passport from 'passport';
-import AuthService from '../services/AuthService.js';
+import { Router } from "express";
+import passport from "passport";
+import AuthController from "../controllers/AuthController.js";
 
-const router = express.Router();
+const router = Router();
 
 // Register
-router.post('/register', async (req, res, next) => {
-  try {
-    const user = await AuthService.register(req.body);
-    res.status(201).json(user);
-  } catch (err) {
-    next(err);
-  }
-});
+router.post("/register", AuthController.register);
 
 // Login
-router.post('/login', passport.authenticate('local'), async (req, res, next) => {
-  try {
-    const token = await AuthService.generateToken(req.user);
-    res.json({ token });
-  } catch (err) {
-    next(err);
-  }
-});
+router.post(
+  "/login",
+  passport.authenticate("local", { session: false }),
+  AuthController.login
+);
 
 export default router;

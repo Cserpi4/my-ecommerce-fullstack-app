@@ -1,23 +1,25 @@
-import axios from './client.js';
+import client from "./client.js";
 
-// Termékek lekérése
-export const fetchProducts = async () => {
-  try {
-    const response = await axios.get('/products');
-    return response.data.data;
-  } catch (err) {
-    console.error('Error fetching products:', err);
-    throw err;
-  }
+const productApi = {
+  async fetchProducts() {
+    try {
+      const response = await client.get("/products");
+      return response.data.data;
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      throw err;
+    }
+  },
+
+  async fetchProductById(id) {
+    try {
+      const response = await client.get(`/products/${id}`);
+      return response.data.data;
+    } catch (err) {
+      console.error(`Error fetching product ${id}:`, err);
+      throw err;
+    }
+  },
 };
 
-// Egy termék lekérése ID alapján
-export const fetchProductById = async id => {
-  try {
-    const response = await axios.get(`/products/${id}`);
-    return response.data.data;
-  } catch (err) {
-    console.error(`Error fetching product ${id}:`, err);
-    throw err;
-  }
-};
+export default productApi;

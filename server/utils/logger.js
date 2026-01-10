@@ -1,24 +1,26 @@
 // server/utils/logger.js
-const log = (message, type = 'info') => {
+
+const formatMessage = (level, message) => {
   const timestamp = new Date().toISOString();
-  switch (type) {
-    case 'info':
-      console.log(`[INFO - ${timestamp}] ${message}`);
-      break;
-    case 'warn':
-      console.warn(`[WARN - ${timestamp}] ${message}`);
-      break;
-    case 'error':
-      console.error(`[ERROR - ${timestamp}] ${message}`);
-      break;
-    default:
-      console.log(`[LOG - ${timestamp}] ${message}`);
-  }
+  return `[${level.toUpperCase()} - ${timestamp}] ${message}`;
 };
 
-export default {
-  log,
-  info: (msg) => log(msg, 'info'),
-  warn: (msg) => log(msg, 'warn'),
-  error: (msg) => log(msg, 'error'),
+const logger = {
+  info(message) {
+    console.log(formatMessage('info', message));
+  },
+
+  warn(message) {
+    console.warn(formatMessage('warn', message));
+  },
+
+  error(message) {
+    console.error(formatMessage('error', message));
+  },
+
+  log(message) {
+    console.log(formatMessage('log', message));
+  },
 };
+
+export default logger;

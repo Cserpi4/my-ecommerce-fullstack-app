@@ -1,7 +1,7 @@
-import express from 'express';
-import cartController from '../controllers/cartController.js';
+import { Router } from "express";
+import CartController from "../controllers/CartController.js";
 
-const router = express.Router();
+const router = Router();
 
 /*
   Cart flow:
@@ -9,6 +9,6 @@ const router = express.Router();
   (Items CRUD külön routerben: /api/cart/items)
 */
 
-router.get('/', cartController.getUserCart);
+router.get("/", CartController.getUserCart);
 
 export default router;

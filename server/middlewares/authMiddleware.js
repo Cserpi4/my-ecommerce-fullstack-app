@@ -1,50 +1,60 @@
 import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
 
-// Kötelező JWT
-const protect = (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
-
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Not authorized, token missing' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, config.jwtSecret);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res.status(401).json({ success: false, message: 'Not authorized, token invalid' });
-  }
-};
-
-// Admin only
-const protectAdmin = (req, res, next) => {
-  if (!req.user || !req.user.isAdmin) {
-    return res.status(403).json({ success: false, message: 'Forbidden, admin only' });
-  }
-  next();
-};
-
-// ✅ OPTIONAL JWT (cart-hoz)
-const optionalProtect = (req, res, next) => {
+const getBearerToken = (req) => {
   const header = req.headers.authorization;
+  if (!header) return null;
 
-  if (header && header.startsWith('Bearer')) {
-    try {
-      const token = header.split(' ')[1];
-      const decoded = jwt.verify(token, config.jwtSecret);
-      req.user = decoded;
-    } catch (err) {
-      req.user = null; // rossz token → anonként megy tovább
-    }
-  }
+  const [type, token] = header.split(' ');
+  if (type !== 'Bearer' || !token) return null;
 
-  next();
+  return token;
 };
 
-export default { protect, protectAdmin, optionalProtect };
+const verifyToken = (token) => jwt.verify(token, config.jwtSecret);
+
+const authMiddleware = {
+  // Kötelező JWT
+  protect(req, res, next) {
+    const token = getBearerToken(req);
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Not authorized, token missing' });
+    }
+
+    try {
+      req.user = verifyToken(token);
+      return next();
+    } catch (err) {
+      return res.status(401).json({ success: false, message: 'Not authorized, token invalid' });
+    }
+  },
+
+  // Optional JWT (anon flow-hoz, pl. cart)
+  optionalProtect(req, res, next) {
+    const token = getBearerToken(req);
+
+    if (!token) {
+      req.user = null;
+      return next();
+    }
+
+    try {
+      req.user = verifyToken(token);
+    } catch (err) {
+      req.user = null;
+    }
+
+    return next();
+  },
+
+  // Admin only (protect után használd)
+  protectAdmin(req, res, next) {
+    if (!req.user || !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Forbidden, admin only' });
+    }
+    return next();
+  },
+};
+
+export default authMiddleware;

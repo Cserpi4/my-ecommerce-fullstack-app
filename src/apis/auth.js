@@ -1,18 +1,20 @@
-import client from './client.js';
+import client from "./client.js";
 
-const login = async credentials => {
-  const response = await client.post('/auth/login', credentials);
-  return response.data;
+const authApi = {
+  async login(credentials) {
+    const response = await client.post("/auth/login", credentials);
+    return response.data;
+  },
+
+  async register(userData) {
+    const response = await client.post("/auth/register", userData);
+    return response.data;
+  },
+
+  async logout() {
+    const response = await client.post("/auth/logout");
+    return response.data;
+  },
 };
 
-const register = async userData => {
-  const response = await client.post('/auth/register', userData);
-  return response.data;
-};
-
-const logout = async () => {
-  const response = await client.post('/auth/logout');
-  return response.data;
-};
-
-export default { login, register, logout };
+export default authApi;

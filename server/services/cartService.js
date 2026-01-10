@@ -1,29 +1,27 @@
-import cartModel from '../models/cartModel.js';
+import CartModel from "../models/CartModel.js";
 
 const cartService = {
-
   async getCartByUserId(userId) {
-    return cartModel.getByUserId(userId);
+    return CartModel.getByUserId(userId);
   },
 
   async getCartById(cartId) {
-    return cartModel.getById(cartId);
+    return CartModel.getById(cartId);
   },
 
   async createCart(userId = null) {
-    return cartModel.create(userId);
+    return CartModel.create(userId);
   },
 
   async getOrCreateCartByUserId(userId) {
-    let cart = await cartModel.getByUserId(userId);
+    let cart = await CartModel.getByUserId(userId);
 
     if (!cart) {
-      cart = await cartModel.create(userId);
+      cart = await CartModel.create(userId);
     }
 
     return cart;
   },
-
 };
 
 export default cartService;

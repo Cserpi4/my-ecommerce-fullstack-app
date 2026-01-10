@@ -1,4 +1,4 @@
-import CartItemService from "../services/cartItemService.js";
+import cartItemService from "../services/cartItemService.js";
 import ErrorHandling from "../utils/errorHandling.js";
 
 const CartItemController = {
@@ -10,7 +10,7 @@ const CartItemController = {
         return res.status(400).json({ success: false, error: "productId is required" });
       }
 
-      const result = await CartItemService.addItem(req, productId, quantity);
+      const result = await cartItemService.addItem(req, productId, quantity);
 
       return res.status(200).json({
         success: true,
@@ -35,7 +35,7 @@ const CartItemController = {
         return res.status(400).json({ success: false, error: "cartItemId is required" });
       }
 
-      const result = await CartItemService.updateItem(req, cartItemId, quantity);
+      const result = await cartItemService.updateItem(req, cartItemId, quantity);
 
       return res.status(200).json({
         success: true,
@@ -59,7 +59,7 @@ const CartItemController = {
         return res.status(400).json({ success: false, error: "cartItemId is required" });
       }
 
-      const result = await CartItemService.removeItem(req, cartItemId);
+      const result = await cartItemService.removeItem(req, cartItemId);
 
       return res.status(200).json({
         success: true,

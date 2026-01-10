@@ -1,5 +1,5 @@
-import cartService from '../services/cartService.js';
-import CartItemModel from '../models/cartItemModel.js';
+import cartService from "../services/cartService.js";
+import CartItemModel from "../models/CartItemModel.js";
 
 const computeTotal = (items) =>
   items.reduce((sum, it) => {
@@ -13,15 +13,14 @@ const toIntOrNull = (v) => {
   return Number.isInteger(n) && n > 0 ? n : null;
 };
 
-const cartController = {
+const CartController = {
   async getUserCart(req, res, next) {
     try {
-      res.set('Cache-Control', 'no-store');
+      res.set("Cache-Control", "no-store");
 
-      // ✅ DEBUG (csak most, amíg javítjuk)
-      console.log('GET /api/cart -> x-cart-id header:', req.get('x-cart-id'));
-      console.log('GET /api/cart -> session cartId:', req.session?.cartId);
-      console.log('GET /api/cart -> sessionID:', req.sessionID);
+      console.log("GET /api/cart -> x-cart-id header:", req.get("x-cart-id"));
+      console.log("GET /api/cart -> session cartId:", req.session?.cartId);
+      console.log("GET /api/cart -> sessionID:", req.sessionID);
 
       // USER
       if (req.user?.id) {
@@ -36,16 +35,10 @@ const cartController = {
         });
       }
 
-      // ✅ ANON: session + header fallback (cookie nélkül is működik)
-      const headerCartId = toIntOrNull(req.get('x-cart-id'));
+      // ANON
+      const headerCartId = toIntOrNull(req.get("x-cart-id"));
       const sessionCartId = toIntOrNull(req.session?.cartId);
-
       const cartId = sessionCartId ?? headerCartId;
-
-      // ✅ DEBUG: melyik ágból jött a cartId?
-      console.log('GET /api/cart -> parsed headerCartId:', headerCartId);
-      console.log('GET /api/cart -> parsed sessionCartId:', sessionCartId);
-      console.log('GET /api/cart -> chosen cartId:', cartId);
 
       if (!cartId) {
         return res.json({
@@ -54,7 +47,6 @@ const cartController = {
         });
       }
 
-      // opcionális: ha headerből jött, próbáljuk sessionbe is betenni
       if (!sessionCartId && req.session) {
         req.session.cartId = cartId;
       }
@@ -63,7 +55,6 @@ const cartController = {
       try {
         items = await CartItemModel.getByCartId(cartId);
       } catch (e) {
-        console.log('GET /api/cart -> getByCartId ERROR:', e?.message || e);
         if (req.session) req.session.cartId = null;
         return res.json({
           success: true,
@@ -72,9 +63,6 @@ const cartController = {
       }
 
       const total = computeTotal(items);
-
-      // ✅ DEBUG: mennyi item jött?
-      console.log('GET /api/cart -> items length:', Array.isArray(items) ? items.length : 'not-array');
 
       return res.json({
         success: true,
@@ -86,4 +74,4 @@ const cartController = {
   },
 };
 
-export default cartController;
+export default CartController;

@@ -6,32 +6,27 @@ const stripe = new Stripe(config.stripeSecretKey, {
   apiVersion: '2022-11-15',
 });
 
-// Fizetés létrehozása
-const createPaymentIntent = async ({ amount, currency = 'usd', metadata = {} }) => {
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: Math.round(amount * 100), // centre konvertálás
-    currency,
-    metadata,
-  });
-  return paymentIntent;
+const paymentProvider = {
+  // Fizetés létrehozása
+  async createIntent({ amount, currency = 'usd', metadata = {} }) {
+    return stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // centbe
+      currency,
+      metadata,
+    });
+  },
+
+  // Fizetés lekérdezése
+  async retrieveIntent(paymentIntentId) {
+    return stripe.paymentIntents.retrieve(paymentIntentId);
+  },
+
+  // Refund
+  async refund(paymentIntentId) {
+    return stripe.refunds.create({
+      payment_intent: paymentIntentId,
+    });
+  },
 };
 
-// Fizetés lekérdezése
-const retrievePaymentIntent = async paymentIntentId => {
-  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-  return paymentIntent;
-};
-
-// Refund létrehozása
-const refundPayment = async paymentIntentId => {
-  const refund = await stripe.refunds.create({
-    payment_intent: paymentIntentId,
-  });
-  return refund;
-};
-
-export default {
-  createPaymentIntent,
-  retrievePaymentIntent,
-  refundPayment,
-};
+export default paymentProvider;

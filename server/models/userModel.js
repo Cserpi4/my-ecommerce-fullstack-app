@@ -11,35 +11,35 @@ const UserModel = {
     `;
     const values = [username, email, password, googleId];
     const { rows } = await pool.query(query, values);
-    return rows[0];
+    return rows[0] || null;
   },
 
   // Felhasználó keresése ID alapján
   async findById(id) {
     const query = `SELECT * FROM users WHERE id = $1;`;
     const { rows } = await pool.query(query, [id]);
-    return rows[0];
+    return rows[0] || null;
   },
 
   // Felhasználó keresése username alapján
   async findByUsername(username) {
     const query = `SELECT * FROM users WHERE username = $1;`;
     const { rows } = await pool.query(query, [username]);
-    return rows[0];
+    return rows[0] || null;
   },
 
   // Felhasználó keresése email alapján
   async findByEmail(email) {
     const query = `SELECT * FROM users WHERE email = $1;`;
     const { rows } = await pool.query(query, [email]);
-    return rows[0];
+    return rows[0] || null;
   },
 
   // Felhasználó keresése Google ID alapján
   async findByGoogleId(googleId) {
     const query = `SELECT * FROM users WHERE google_id = $1;`;
     const { rows } = await pool.query(query, [googleId]);
-    return rows[0];
+    return rows[0] || null;
   },
 
   // Jelszó frissítése
@@ -51,14 +51,14 @@ const UserModel = {
       RETURNING *;
     `;
     const { rows } = await pool.query(query, [newPassword, id]);
-    return rows[0];
+    return rows[0] || null;
   },
 
   // Felhasználó törlése
   async delete(id) {
     const query = `DELETE FROM users WHERE id = $1 RETURNING *;`;
     const { rows } = await pool.query(query, [id]);
-    return rows[0];
+    return rows[0] || null;
   },
 };
 

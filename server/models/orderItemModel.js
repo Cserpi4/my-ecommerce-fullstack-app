@@ -10,7 +10,7 @@ const OrderItemModel = {
       `,
       [orderId, productId, quantity, price]
     );
-    return rows[0];
+    return rows[0] || null;
   },
 
   async getByOrderId(orderId) {
