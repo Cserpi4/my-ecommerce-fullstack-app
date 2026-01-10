@@ -1,8 +1,8 @@
-import { Router } from "express";
+import express from "express";
 import CartItemController from "../controllers/CartItemController.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 
-const router = Router();
+const router = express.Router();
 
 router.use(authMiddleware.optionalProtect);
 

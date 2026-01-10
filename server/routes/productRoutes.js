@@ -1,9 +1,9 @@
-import { Router } from "express";
+import express from "express";
 import ProductController from "../controllers/ProductController.js";
 import fileUpload from "../middlewares/fileUpload.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 
-const router = Router();
+const router = express.Router();
 
 // Public
 router.get("/", ProductController.getProducts);

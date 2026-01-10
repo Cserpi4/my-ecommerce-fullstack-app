@@ -1,9 +1,9 @@
-import { Router } from "express";
+import express from "express";
 import passport from "passport";
 import UserController from "../controllers/UserController.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 
-const router = Router();
+const router = express.Router();
 
 // Local auth
 router.post("/register", UserController.registerUser);

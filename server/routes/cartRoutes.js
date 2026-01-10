@@ -1,7 +1,7 @@
-import { Router } from "express";
+import express from "express";
 import CartController from "../controllers/CartController.js";
 
-const router = Router();
+const router = express.Router();
 
 /*
   Cart flow:

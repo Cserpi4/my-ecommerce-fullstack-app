@@ -1,8 +1,8 @@
-import { Router } from "express";
+import express from "express";
 import OrderController from "../controllers/OrderController.js";
 // import authMiddleware from '../middlewares/authMiddleware.js';
 
-const router = Router();
+const router = express.Router();
 
 // router.use(authMiddleware.protect);
 

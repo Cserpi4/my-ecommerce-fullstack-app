@@ -1,8 +1,8 @@
-import { Router } from "express";
+import express from "express";
 import passport from "passport";
 import AuthController from "../controllers/AuthController.js";
 
-const router = Router();
+const router = express.Router();
 
 // Register
 router.post("/register", AuthController.register);
