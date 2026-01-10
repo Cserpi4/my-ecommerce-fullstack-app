@@ -1,29 +1,29 @@
 // server/loader/express.js
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import cookieParser from 'cookie-parser';
-import rateLimitPkg from 'express-rate-limit';
-import csurf from 'csurf';
-import session from 'express-session';
-import config from '../config/index.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import cookieParser from "cookie-parser";
+import rateLimitPkg from "express-rate-limit";
+import csurf from "csurf";
+import session from "express-session";
+import config from "../config/index.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Route-ok
-import userRoutes from '../routes/userRoutes.js';
-import productRoutes from '../routes/productRoutes.js';
-import cartRoutes from '../routes/cartRoutes.js';
-import cartItemRoutes from '../routes/cartItemRoutes.js';
-import orderRoutes from '../routes/orderRoutes.js';
-import paymentRoutes from '../routes/paymentRoutes.js';
+import userRoutes from "../routes/userRoutes.js";
+import productRoutes from "../routes/productRoutes.js";
+import cartRoutes from "../routes/cartRoutes.js";
+import cartItemRoutes from "../routes/cartItemRoutes.js";
+import orderRoutes from "../routes/orderRoutes.js";
+import paymentRoutes from "../routes/paymentRoutes.js";
 
 // Swagger
-import setupSwagger from './swagger.js';
+import setupSwagger from "./swagger.js";
 
 // Error middleware
-import errorMiddleware from '../middlewares/errorMiddleware.js';
+import errorMiddleware from "../middlewares/errorMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,17 +32,17 @@ const expressLoader = () => {
   const app = express();
 
   // ✅ Proxy mögött (Render) ettől lesz jó a secure cookie
-  app.set('trust proxy', 1);
+  app.set("trust proxy", 1);
 
-  // Debug (ha kell, hagyhatod ideiglenesen)
-  console.log('NODE_ENV:', config.nodeEnv);
-  console.log('CLIENT_URL:', config.clientUrl);
-  console.log('SESSION_SECRET loaded:', Boolean(config.sessionSecret));
+  // Debug (ideiglenes, nyugodtan törölheted később)
+  console.log("NODE_ENV:", config.nodeEnv);
+  console.log("CLIENT_URL:", config.clientUrl);
+  console.log("SESSION_SECRET loaded:", Boolean(config.sessionSecret));
 
   // Security headers
   app.use(helmet());
 
-  // ✅ CORS: origin NE legyen '*', és credentials legyen true
+  // ✅ CORS: origin NEM '*', és credentials true (cookie + custom header miatt)
   app.use(
     cors({
       origin: config.clientUrl, // pl. https://xxx.netlify.app
@@ -51,7 +51,7 @@ const expressLoader = () => {
   );
 
   // Logger
-  app.use(morgan('dev'));
+  app.use(morgan("dev"));
 
   // JSON parsing
   app.use(express.json());
@@ -59,38 +59,37 @@ const expressLoader = () => {
 
   // Static files
   app.use(
-    '/storage',
+    "/storage",
     (req, res, next) => {
-      res.setHeader('Access-Control-Allow-Origin', config.clientUrl || 'http://localhost:3001');
-      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.setHeader("Access-Control-Allow-Origin", config.clientUrl || "http://localhost:3001");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       next();
     },
-    express.static(path.join(__dirname, '../storage'))
+    express.static(path.join(__dirname, "../storage"))
   );
 
   // Cookies
   app.use(cookieParser());
 
-  // ✅ Cross-site felismerés: ha nem localhost a clientUrl, akkor cookie "none+secure"
+  // ✅ Cross-site felismerés
   const isCrossSite =
-    typeof config.clientUrl === 'string' &&
+    typeof config.clientUrl === "string" &&
     config.clientUrl.length > 0 &&
-    !config.clientUrl.includes('localhost') &&
-    !config.clientUrl.includes('127.0.0.1');
+    !config.clientUrl.includes("localhost") &&
+    !config.clientUrl.includes("127.0.0.1");
 
   // Session
   app.use(
     session({
-      secret: config.sessionSecret || 'dev_secret_for_testing',
+      secret: config.sessionSecret || "dev_secret_for_testing",
       resave: false,
-      // ✅ fontos: csak akkor hozzon létre sessiont, ha tényleg használtad
       saveUninitialized: false,
       proxy: true,
       cookie: {
         httpOnly: true,
-        // ✅ cross-site esetén kötelező a secure + sameSite none
-        secure: true,
-        sameSite: 'none',
+        // ✅ csak cross-site esetén secure + none
+        secure: isCrossSite,
+        sameSite: isCrossSite ? "none" : "lax",
         maxAge: 1000 * 60 * 60 * 24, // 1 nap
       },
     })
@@ -100,26 +99,29 @@ const expressLoader = () => {
   app.use(rateLimitPkg({ windowMs: 15 * 60 * 1000, max: 100 }));
 
   // Health-check route
-  app.get('/', (req, res) => res.send('Backend is running ✅'));
+  app.get("/", (req, res) => res.send("Backend is running ✅"));
 
-  // ✅ CSRF NÉLKÜL: cart + payments (cross-origin miatt)
-  app.use('/api/cart', cartRoutes);
-  app.use('/api/cart/items', cartItemRoutes);
-  app.use('/api/payments', paymentRoutes);
+  // ✅ CSRF NÉLKÜL: cart + payments (SPA, header-alapú azonosítás)
+  app.use("/api/cart", cartRoutes);
+  app.use("/api/cart/items", cartItemRoutes);
+  app.use("/api/payments", paymentRoutes);
 
-  // ✅ CSRF VÉDELEM: minden másra
+  // ✅ KOMPATIBILITÁS: ha valahol még /payments van a frontendben
+  app.use("/payments", paymentRoutes);
+
+  // ✅ CSRF VÉDELEM: minden más API-ra
   const csrfProtection = csurf({ cookie: true });
   app.use(csrfProtection);
 
   // CSRF token endpoint
-  app.get('/api/csrf-token', (req, res) => {
+  app.get("/api/csrf-token", (req, res) => {
     res.json({ csrfToken: req.csrfToken() });
   });
 
   // API Route-ok (CSRF mögött)
-  app.use('/api/users', userRoutes);
-  app.use('/api/products', productRoutes);
-  app.use('/api/orders', orderRoutes);
+  app.use("/api/users", userRoutes);
+  app.use("/api/products", productRoutes);
+  app.use("/api/orders", orderRoutes);
 
   // Swagger UI
   setupSwagger(app);
