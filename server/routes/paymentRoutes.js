@@ -1,9 +1,9 @@
 // server/routes/paymentRoutes.js
-import { Router } from "express";
+import express from "express";
 import PaymentController from "../controllers/PaymentController.js";
-// import authMiddleware from '../middlewares/authMiddleware.js';
+// import authMiddleware from "../middlewares/authMiddleware.js";
 
-const router = Router();
+const router = express.Router();
 
 // router.use(authMiddleware.protect);
 
