@@ -2,7 +2,7 @@ import client from "./client.js";
 
 const paymentApi = {
   async createPayment() {
-    const { data } = await client.post("/payments");
+    const { data } = await client.post("/payments", {});
     return data;
   },
 

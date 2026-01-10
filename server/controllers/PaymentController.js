@@ -23,6 +23,11 @@ const stripe = new Stripe(secretKey, { apiVersion: "2024-06-20" });
 const PaymentController = {
   async createPayment(req, res) {
     try {
+      // ✅ FIX: req.body lehet undefined -> ne destructuringolj rajta közvetlenül
+      const body = req.body ?? {};
+      const orderId = body.orderId ?? null;
+      const currency = body.currency ?? "usd";
+
       if (!secretKey) {
         return res.status(500).json({
           success: false,
@@ -31,21 +36,16 @@ const PaymentController = {
         });
       }
 
-      const { orderId = null, currency = "usd" } = req.body;
-
-      // USER -> user cart
       let cartId = null;
 
       if (req.user?.id) {
         const cart = await cartService.getOrCreateCartByUserId(req.user.id);
         cartId = cart?.id ?? null;
       } else {
-        // ANON -> header-first cartId
         const headerCartId = toIntOrNull(req.get("x-cart-id"));
         const sessionCartId = toIntOrNull(req.session?.cartId);
         cartId = headerCartId ?? sessionCartId;
 
-        // header felülírja a sessiont
         if (req.session && headerCartId && req.session.cartId !== headerCartId) {
           req.session.cartId = headerCartId;
         }
@@ -134,11 +134,7 @@ const PaymentController = {
     let event;
 
     try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
+      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (err) {
       console.error("❌ Webhook signature verification failed:", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
