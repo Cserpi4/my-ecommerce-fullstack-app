@@ -1,13 +1,12 @@
-// server/controllers/UserController.js
 import userService from "../services/userService.js";
 import jwtUtils from "../utils/jwtUtils.js";
+import config from "../config/index.js";
 
 const UserController = {
   async registerUser(req, res) {
     try {
       const { username, email, password } = req.body;
       const user = await userService.createUser({ username, email, password });
-
       res.status(201).json({ success: true, data: user });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
@@ -42,6 +41,16 @@ const UserController = {
     } catch (err) {
       res.status(404).json({ success: false, error: err.message });
     }
+  },
+
+  googleCallback(req, res) {
+    const token = jwtUtils.sign({
+      id: req.user.id,
+      username: req.user.username,
+      email: req.user.email,
+    });
+
+    res.redirect(`${config.clientUrl}/auth?token=${token}`);
   },
 };
 
