@@ -18,10 +18,6 @@ const CartController = {
     try {
       res.set("Cache-Control", "no-store");
 
-      console.log("GET /api/cart -> x-cart-id header:", req.get("x-cart-id"));
-      console.log("GET /api/cart -> session cartId:", req.session?.cartId);
-      console.log("GET /api/cart -> sessionID:", req.sessionID);
-
       // USER
       if (req.user?.id) {
         const cart = await cartService.getOrCreateCartByUserId(req.user.id);
@@ -38,7 +34,8 @@ const CartController = {
       // ANON
       const headerCartId = toIntOrNull(req.get("x-cart-id"));
       const sessionCartId = toIntOrNull(req.session?.cartId);
-      const cartId = sessionCartId ?? headerCartId;
+
+      const cartId = headerCartId ?? sessionCartId;
 
       if (!cartId) {
         return res.json({
@@ -47,8 +44,9 @@ const CartController = {
         });
       }
 
-      if (!sessionCartId && req.session) {
-        req.session.cartId = cartId;
+      // header mindig felülírja a sessiont
+      if (req.session && headerCartId && req.session.cartId !== headerCartId) {
+        req.session.cartId = headerCartId;
       }
 
       let items = [];
