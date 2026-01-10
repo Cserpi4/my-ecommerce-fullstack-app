@@ -97,8 +97,15 @@ const CheckoutPage = () => {
       setClientSecret(data.payment.client_secret);
       setShowPayment(true);
     } catch (err) {
-      console.error("PaymentIntent error:", err);
-      alert("Hiba történt a fizetési előkészítésnél.");
+      console.error("PaymentIntent error (status):", err?.response?.status);
+      console.error("PaymentIntent error (data):", err?.response?.data);
+      console.error("PaymentIntent error (message):", err?.message);
+
+      alert(
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          "Hiba történt a fizetési előkészítésnél."
+      );
     } finally {
       setLoading(false);
     }
