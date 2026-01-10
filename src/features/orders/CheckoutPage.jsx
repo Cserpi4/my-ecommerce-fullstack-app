@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { createOrder } from './OrderSlice';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import axios from 'axios';
-import './CheckoutPage.css';
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
+import { createOrder } from "./OrderSlice";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import paymentApi from "../../apis/paymentApi.js";
+import "./CheckoutPage.css";
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
@@ -14,11 +14,11 @@ const CheckoutForm = ({ orderData }) => {
   const stripe = useStripe();
   const elements = useElements();
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // ✅ navigáció, nem window.location
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!stripe || !elements) return;
 
@@ -28,10 +28,9 @@ const CheckoutForm = ({ orderData }) => {
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        // A Stripe csak fejlesztés alatt enged HTTP-t
         return_url: `${window.location.origin}/order-success`,
       },
-      redirect: 'if_required',
+      redirect: "if_required",
     });
 
     if (error) {
@@ -40,11 +39,10 @@ const CheckoutForm = ({ orderData }) => {
       return;
     }
 
-    // 🧾 Mentés Redux + adatbázisba
     dispatch(
       createOrder({
-        totalAmount: orderData.total, // biztos, hogy ne legyen null
-        items: orderData.cartItems.map(item => ({
+        totalAmount: orderData.total,
+        items: orderData.cartItems.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
           price: item.price,
@@ -54,8 +52,7 @@ const CheckoutForm = ({ orderData }) => {
       })
     );
 
-    // ✅ ne töltsd újra az oldalt
-    navigate('/order-success');
+    navigate("/order-success");
   };
 
   return (
@@ -64,7 +61,7 @@ const CheckoutForm = ({ orderData }) => {
       <PaymentElement />
       {error && <p className="payment-error">⚠️ {error}</p>}
       <button disabled={loading || !stripe} className="checkout-btn">
-        {loading ? 'Processing...' : 'Pay Now'}
+        {loading ? "Processing..." : "Pay Now"}
       </button>
     </form>
   );
@@ -76,37 +73,32 @@ const CheckoutPage = () => {
   const { cartItems = [], total = 0 } = location.state || {};
 
   const [shipping, setShipping] = useState({
-    fullName: '',
-    address: '',
-    city: '',
-    postalCode: '',
-    country: '',
+    fullName: "",
+    address: "",
+    city: "",
+    postalCode: "",
+    country: "",
   });
 
   const [showPayment, setShowPayment] = useState(false);
   const [clientSecret, setClientSecret] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     setShipping({ ...shipping, [e.target.name]: e.target.value });
   };
 
-  const handleContinue = async e => {
+  const handleContinue = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // 🧠 Stripe PaymentIntent létrehozás a backend-en
-      const { data } = await axios.post(`${process.env.REACT_APP_API_URL}/payments`, {
-        amount: Math.round(total * 100), // Stripe centekben várja az összeget
-        currency: 'usd',
-      });
-
+      const data = await paymentApi.createPayment();
       setClientSecret(data.payment.client_secret);
       setShowPayment(true);
     } catch (err) {
-      console.error('PaymentIntent error:', err);
-      alert('Hiba történt a fizetési előkészítésnél.');
+      console.error("PaymentIntent error:", err);
+      alert("Hiba történt a fizetési előkészítésnél.");
     } finally {
       setLoading(false);
     }
@@ -119,11 +111,12 @@ const CheckoutPage = () => {
       {!showPayment ? (
         <form className="shipping-form" onSubmit={handleContinue}>
           <h3>Shipping Information</h3>
-          {Object.keys(shipping).map(key => (
+
+          {Object.keys(shipping).map((key) => (
             <input
               key={key}
               name={key}
-              placeholder={key.replace(/([A-Z])/g, ' $1')}
+              placeholder={key.replace(/([A-Z])/g, " $1")}
               value={shipping[key]}
               onChange={handleChange}
               required
@@ -136,7 +129,7 @@ const CheckoutPage = () => {
           </div>
 
           <button type="submit" className="checkout-btn" disabled={loading}>
-            {loading ? 'Preparing Payment...' : 'Continue to Payment'}
+            {loading ? "Preparing Payment..." : "Continue to Payment"}
           </button>
         </form>
       ) : (

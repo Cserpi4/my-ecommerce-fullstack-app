@@ -2,20 +2,84 @@
 import paymentService from "../services/paymentService.js";
 import Stripe from "stripe";
 import config from "../config/index.js";
+import cartService from "../services/cartService.js";
+import CartItemModel from "../models/CartItemModel.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || config.stripeSecretKey, {
-  apiVersion: "2024-06-20",
-});
+const toIntOrNull = (v) => {
+  const n = Number(v);
+  return Number.isInteger(n) && n > 0 ? n : null;
+};
+
+const computeTotalCents = (items) =>
+  items.reduce((sum, it) => {
+    const price = Number(it.unit_price ?? it.price ?? 0);
+    const qty = Number(it.quantity ?? 0);
+    return sum + Math.round(price * 100) * qty;
+  }, 0);
+
+const secretKey = process.env.STRIPE_SECRET_KEY || config.stripeSecretKey;
+const stripe = new Stripe(secretKey, { apiVersion: "2024-06-20" });
 
 const PaymentController = {
-  async createPayment(req, res, next) {
+  async createPayment(req, res) {
     try {
-      const { orderId = null, amount, currency = "usd" } = req.body;
+      if (!secretKey) {
+        return res.status(500).json({
+          success: false,
+          message: "Payment creation failed.",
+          error: "Missing STRIPE_SECRET_KEY",
+        });
+      }
+
+      const { orderId = null, currency = "usd" } = req.body;
+
+      // USER -> user cart
+      let cartId = null;
+
+      if (req.user?.id) {
+        const cart = await cartService.getOrCreateCartByUserId(req.user.id);
+        cartId = cart?.id ?? null;
+      } else {
+        // ANON -> header-first cartId
+        const headerCartId = toIntOrNull(req.get("x-cart-id"));
+        const sessionCartId = toIntOrNull(req.session?.cartId);
+        cartId = headerCartId ?? sessionCartId;
+
+        // header felülírja a sessiont
+        if (req.session && headerCartId && req.session.cartId !== headerCartId) {
+          req.session.cartId = headerCartId;
+        }
+      }
+
+      if (!cartId) {
+        return res.status(400).json({
+          success: false,
+          message: "Payment creation failed.",
+          error: "Missing cartId",
+        });
+      }
+
+      const items = await CartItemModel.getByCartId(cartId);
+      const amount = computeTotalCents(items);
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Payment creation failed.",
+          error: "Cart is empty",
+        });
+      }
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount,
         currency,
         automatic_payment_methods: { enabled: true },
+        metadata: {
+          cartId: String(cartId),
+          isAnonymous: req.user?.id ? "false" : "true",
+          ...(req.user?.id ? { userId: String(req.user.id) } : {}),
+          ...(orderId ? { orderId: String(orderId) } : {}),
+        },
       });
 
       const result = await paymentService.createPayment({
@@ -24,16 +88,18 @@ const PaymentController = {
         currency,
       });
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         payment: {
           ...result,
           client_secret: paymentIntent.client_secret,
         },
+        cartId,
+        amount,
       });
     } catch (err) {
-      console.error("❌ createPayment error:", err.message);
-      res.status(500).json({
+      console.error("❌ createPayment error:", err);
+      return res.status(500).json({
         success: false,
         message: "Payment creation failed.",
         error: err.message,
@@ -53,13 +119,13 @@ const PaymentController = {
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         payment,
       });
     } catch (err) {
       console.error("❌ getPayment error:", err.message);
-      next(err);
+      return next(err);
     }
   },
 
@@ -90,7 +156,7 @@ const PaymentController = {
       console.warn("⚠️ Payment failed:", paymentIntent.id);
     }
 
-    res.json({ received: true });
+    return res.json({ received: true });
   },
 };
 

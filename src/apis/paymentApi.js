@@ -1,18 +1,13 @@
 import client from "./client.js";
 
 const paymentApi = {
-  async createPayment({ amount, metadata }) {
-    const { data } = await client.post("/payments", { amount, metadata });
+  async createPayment() {
+    const { data } = await client.post("/payments");
     return data;
   },
 
-  async retrievePayment(paymentIntentId) {
-    const { data } = await client.get(`/payments/${paymentIntentId}`);
-    return data;
-  },
-
-  async refundPayment(paymentIntentId) {
-    const { data } = await client.post("/payments/refund", { paymentIntentId });
+  async retrievePayment(paymentId) {
+    const { data } = await client.get(`/payments/${paymentId}`);
     return data;
   },
 };
