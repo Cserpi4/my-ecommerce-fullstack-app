@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import userApi from "../../apis/userApi.js";
+import { fetchCart } from "../cart/CartSlice.js";
 
 // --- Initial State ---
 const initialState = {
@@ -14,9 +15,10 @@ const initialState = {
 // --- Login ---
 export const login = createAsyncThunk(
   "auth/login",
-  async (credentials, { rejectWithValue }) => {
+  async (credentials, { dispatch, rejectWithValue }) => {
     try {
       const data = await userApi.loginUser(credentials);
+      await dispatch(fetchCart());
       return data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Login failed");

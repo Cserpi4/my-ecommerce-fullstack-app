@@ -1,4 +1,5 @@
 import CartModel from "../models/CartModel.js";
+import CartItemModel from "../models/CartItemModel.js";
 
 const cartService = {
   async getCartByUserId(userId) {
@@ -21,6 +22,32 @@ const cartService = {
     }
 
     return cart;
+  },
+
+  async mergeCarts(sourceCartId, targetCartId) {
+    if (!sourceCartId || !targetCartId || sourceCartId === targetCartId) {
+      return null;
+    }
+
+    const sourceItems = await CartItemModel.getByCartId(sourceCartId);
+
+    for (const item of sourceItems) {
+      const existing = await CartItemModel.findByCartAndProduct(
+        targetCartId,
+        item.product_id
+      );
+
+      if (existing) {
+        await CartItemModel.incrementQuantity(existing.id, item.quantity);
+      } else {
+        await CartItemModel.add(targetCartId, item.product_id, item.quantity);
+      }
+    }
+
+    await CartItemModel.removeByCartId(sourceCartId);
+    await CartModel.delete(sourceCartId);
+
+    return { sourceCartId, targetCartId, movedItems: sourceItems.length };
   },
 };
 

@@ -18,10 +18,23 @@ const CartController = {
     try {
       res.set("Cache-Control", "no-store");
 
+      const headerCartId = toIntOrNull(req.get("x-cart-id"));
+      const sessionCartId = toIntOrNull(req.session?.cartId);
+      const anonCartId = headerCartId ?? sessionCartId;
+
       // USER
       if (req.user?.id) {
         const cart = await cartService.getOrCreateCartByUserId(req.user.id);
         const cartId = cart?.id ?? null;
+
+        if (anonCartId && cartId && anonCartId !== cartId) {
+          await cartService.mergeCarts(anonCartId, cartId);
+        }
+
+        if (req.session) {
+          req.session.cartId = cartId;
+        }
+
         const items = cartId ? await CartItemModel.getByCartId(cartId) : [];
         const total = computeTotal(items);
 
@@ -32,10 +45,7 @@ const CartController = {
       }
 
       // ANON
-      const headerCartId = toIntOrNull(req.get("x-cart-id"));
-      const sessionCartId = toIntOrNull(req.session?.cartId);
-
-      const cartId = headerCartId ?? sessionCartId;
+      const cartId = anonCartId;
 
       if (!cartId) {
         return res.json({

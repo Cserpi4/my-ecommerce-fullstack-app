@@ -1,5 +1,6 @@
 // server/controllers/PaymentController.js
 import paymentService from "../services/paymentService.js";
+import cartService from "../services/cartService.js";
 
 const toIntOrNull = (v) => {
   const n = Number(v);
@@ -18,16 +19,26 @@ const PaymentController = {
       // header-first cartId (anon)
       const headerCartId = toIntOrNull(req.get("x-cart-id"));
       const sessionCartId = toIntOrNull(req.session?.cartId);
-      const cartId = headerCartId ?? sessionCartId;
+      const anonCartId = headerCartId ?? sessionCartId;
+
+      const userCart = userId ? await cartService.getOrCreateCartByUserId(userId) : null;
+      const userCartId = userCart?.id ?? null;
 
       // header felülírja a sessiont
       if (!userId && req.session && headerCartId && req.session.cartId !== headerCartId) {
         req.session.cartId = headerCartId;
       }
 
+      if (userId && anonCartId && userCartId && anonCartId !== userCartId) {
+        await cartService.mergeCarts(anonCartId, userCartId);
+        if (req.session) {
+          req.session.cartId = userCartId;
+        }
+      }
+
       const result = await paymentService.createPayment({
         userId,
-        cartId,
+        cartId: anonCartId ?? userCartId,
         orderId,
         currency,
       });

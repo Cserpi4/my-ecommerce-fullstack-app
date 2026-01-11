@@ -67,6 +67,14 @@ const CartItemModel = {
     );
     return res.rows[0] || null;
   },
+
+  async removeByCartId(cartId) {
+    const res = await pool.query(
+      `DELETE FROM cart_items WHERE cart_id=$1 RETURNING *`,
+      [cartId]
+    );
+    return res.rows || [];
+  },
 };
 
 export default CartItemModel;
