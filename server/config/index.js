@@ -20,7 +20,8 @@ const config = {
   googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL,
 
   // Stripe
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY, // <- MOST MÁR A GLOBÁLIS ENV-T HASZNÁLJA
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET, // <- MOST MÁR A GLOBÁLIS ENV-T HASZNÁLJA
 
   // PostgreSQL pool
   pool,
