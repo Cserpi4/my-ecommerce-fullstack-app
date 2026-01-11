@@ -1,4 +1,4 @@
-# 🛒 MyStore – Full-Stack E-commerce App
+MyStore – Full-Stack E-commerce App
 
 A full-stack e-commerce application built with **React, Node.js, Express, and PostgreSQL**.
 
@@ -6,7 +6,7 @@ This project is part of my developer portfolio and focuses on real-world full-st
 
 ---
 
-## Features
+Features
 
 - User authentication (JWT)
 - Product catalog
@@ -17,7 +17,7 @@ This project is part of my developer portfolio and focuses on real-world full-st
 
 ---
 
-## Tech Stack
+Tech Stack
 
 **Frontend:** React, Redux Toolkit  
 **Backend:** Node.js, Express  
