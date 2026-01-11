@@ -33,7 +33,8 @@ Tech Stack
 
 Frontend
 - React  
-- Redux Toolkit  
+- Redux Toolkit
+- CSS
 
 Backend
 - Node.js  
