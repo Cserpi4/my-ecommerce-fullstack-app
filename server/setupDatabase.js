@@ -67,7 +67,10 @@ const createTables = async () => {
         order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
         product_id INTEGER REFERENCES products(id),
         quantity INTEGER NOT NULL,
-        price NUMERIC(10, 2) NOT NULL
+        price NUMERIC(10, 2) NOT NULL,
+        product_name TEXT,
+        unit_price NUMERIC(10, 2),
+        image TEXT
       );
     `);
 

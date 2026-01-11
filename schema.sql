@@ -103,7 +103,10 @@ CREATE TABLE public.order_items (
     order_id integer,
     product_id integer,
     quantity integer NOT NULL,
-    price numeric(10,2) NOT NULL
+    price numeric(10,2) NOT NULL,
+    product_name text,
+    unit_price numeric(10,2),
+    image text
 );
 
 
@@ -467,4 +470,3 @@ ALTER TABLE ONLY public.payments
 --
 
 \unrestrict ImtR1Kk6neuBx59NKWNoZ553gupwoMHkDR90qG0tSppwW7q6Au9TgOHAjmK1Oh6
-
