@@ -88,6 +88,37 @@ const PaymentController = {
     }
   },
 
+  async refundPayment(req, res) {
+    try {
+      const { paymentId } = req.params;
+      const { amount = null, reason = null } = req.body ?? {};
+
+      const payment = await paymentService.getPaymentById(paymentId);
+      if (!payment?.payment_intent_id) {
+        return res.status(404).json({ success: false, message: "Payment not found" });
+      }
+
+      const refund = await paymentService.refundPayment({
+        paymentIntentId: payment.payment_intent_id,
+        amount,
+        reason,
+      });
+
+      return res.status(202).json({
+        success: true,
+        refund,
+        status: "refund_pending",
+      });
+    } catch (err) {
+      const status = err.statusCode || 500;
+      return res.status(status).json({
+        success: false,
+        message: "Refund failed.",
+        error: err.message,
+      });
+    }
+  },
+
   async handleStripeWebhook(req, res) {
     try {
       const signature = req.headers["stripe-signature"];

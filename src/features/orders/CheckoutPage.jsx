@@ -10,7 +10,7 @@ import "./CheckoutPage.css";
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
 // --- Checkout Form ---
-const CheckoutForm = () => {
+const CheckoutForm = ({ orderData }) => {
   const stripe = useStripe();
   const elements = useElements();
   const dispatch = useDispatch();
@@ -39,9 +39,11 @@ const CheckoutForm = () => {
       return;
     }
 
-    const cartId = localStorage.getItem("cartId");
-
-    dispatch(createOrder(cartId ? { cartId: Number(cartId) } : {}));
+    dispatch(
+      createOrder({
+        cartId: orderData.cartId,
+      })
+    );
 
     navigate("/order-success");
   };
@@ -62,6 +64,7 @@ const CheckoutForm = () => {
 const CheckoutPage = () => {
   const location = useLocation();
   const { cartItems = [], total = 0 } = location.state || {};
+  const cartId = localStorage.getItem("cartId");
 
   const [shipping, setShipping] = useState({
     fullName: "",
@@ -133,7 +136,7 @@ const CheckoutPage = () => {
       ) : (
         clientSecret && (
           <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <CheckoutForm />
+            <CheckoutForm orderData={{ ...shipping, total, cartItems, cartId }} />
           </Elements>
         )
       )}

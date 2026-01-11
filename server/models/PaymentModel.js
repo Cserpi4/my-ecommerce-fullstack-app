@@ -27,6 +27,13 @@ const PaymentModel = {
     return result.rows[0] || null;
   },
 
+  async getByPaymentIntentId(paymentIntentId) {
+    const result = await db.query(`SELECT * FROM payments WHERE payment_intent_id = $1`, [
+      paymentIntentId,
+    ]);
+    return result.rows[0] || null;
+  },
+
   async updateStatusByPaymentIntentId(paymentIntentId, status) {
     const result = await db.query(
       `

@@ -37,6 +37,17 @@ const paymentProvider = {
 
     return s.webhooks.constructEvent(rawBody, signature, webhookSecret);
   },
+
+  async createRefund({ paymentIntentId, amount = null, reason = null }) {
+    const s = this.getStripe();
+    const params = {
+      payment_intent: paymentIntentId,
+      ...(amount ? { amount } : {}),
+      ...(reason ? { reason } : {}),
+    };
+
+    return s.refunds.create(params);
+  },
 };
 
 export default paymentProvider;

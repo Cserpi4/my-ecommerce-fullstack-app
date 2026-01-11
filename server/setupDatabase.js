@@ -69,8 +69,7 @@ const createTables = async () => {
         quantity INTEGER NOT NULL,
         price NUMERIC(10, 2) NOT NULL,
         product_name TEXT,
-        unit_price NUMERIC(10, 2),
-        image TEXT
+        product_image TEXT
       );
     `);
 

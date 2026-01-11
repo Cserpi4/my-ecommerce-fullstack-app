@@ -83,6 +83,44 @@ const paymentService = {
     return PaymentModel.updateStatusByPaymentIntentId(paymentIntentId, status);
   },
 
+  async refundPayment({ paymentIntentId, amount = null, reason = null }) {
+    if (!paymentIntentId) throw new Error("Missing paymentIntentId");
+
+    const payment = await PaymentModel.getByPaymentIntentId(paymentIntentId);
+    if (!payment) {
+      const err = new Error("Payment not found");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (amount !== null) {
+      const numericAmount = Number(amount);
+      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        const err = new Error("Invalid refund amount");
+        err.statusCode = 400;
+        throw err;
+      }
+      if (numericAmount > Number(payment.amount)) {
+        const err = new Error("Refund amount exceeds payment amount");
+        err.statusCode = 400;
+        throw err;
+      }
+    }
+
+    await this.updatePaymentStatus(paymentIntentId, "refund_pending");
+
+    try {
+      return await paymentProvider.createRefund({
+        paymentIntentId,
+        amount: amount ?? undefined,
+        reason,
+      });
+    } catch (err) {
+      await this.updatePaymentStatus(paymentIntentId, "refund_failed");
+      throw err;
+    }
+  },
+
   async handleStripeWebhook({ rawBody, signature }) {
     const event = paymentProvider.verifyWebhook({
       rawBody,
@@ -102,6 +140,26 @@ const paymentService = {
     if (event.type === "payment_intent.payment_failed") {
       const pi = event.data.object;
       await this.updatePaymentStatus(pi.id, "failed");
+    }
+
+    if (event.type === "refund.updated") {
+      const refund = event.data.object;
+      const paymentIntentId = refund.payment_intent;
+      if (paymentIntentId) {
+        if (refund.status === "failed" || refund.status === "canceled") {
+          await this.updatePaymentStatus(paymentIntentId, "refund_failed");
+        }
+      }
+    }
+
+    if (event.type === "charge.refunded") {
+      const charge = event.data.object;
+      const paymentIntentId = charge.payment_intent;
+      if (paymentIntentId) {
+        const isPartial = Number(charge.amount_refunded) < Number(charge.amount);
+        const status = isPartial ? "partially_refunded" : "refunded";
+        await this.updatePaymentStatus(paymentIntentId, status);
+      }
     }
 
     return event;

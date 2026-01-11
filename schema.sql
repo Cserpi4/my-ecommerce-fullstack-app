@@ -105,8 +105,7 @@ CREATE TABLE public.order_items (
     quantity integer NOT NULL,
     price numeric(10,2) NOT NULL,
     product_name text,
-    unit_price numeric(10,2),
-    image text
+    product_image text
 );
 
 

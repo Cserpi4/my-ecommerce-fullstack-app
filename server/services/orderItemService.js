@@ -6,9 +6,8 @@ const orderItemService = {
     productId,
     quantity,
     price,
-    productName,
-    unitPrice,
-    image,
+    productName = null,
+    productImage = null,
   }) {
     return OrderItemModel.add({
       orderId,
@@ -16,8 +15,7 @@ const orderItemService = {
       quantity,
       price,
       productName,
-      unitPrice,
-      image,
+      productImage,
     });
   },
 };

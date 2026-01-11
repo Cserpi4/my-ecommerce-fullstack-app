@@ -13,6 +13,9 @@ router.post("/", PaymentController.createPayment);
 // Read payment by id
 router.get("/:paymentId", PaymentController.getPayment);
 
+// Create refund (full or partial)
+router.post("/:paymentId/refund", PaymentController.refundPayment);
+
 // Stripe webhook (must use raw body)
 router.post(
   "/webhook",

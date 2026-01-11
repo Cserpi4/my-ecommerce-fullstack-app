@@ -6,25 +6,16 @@ const OrderItemModel = {
     productId,
     quantity,
     price,
-    productName,
-    unitPrice,
-    image,
+    productName = null,
+    productImage = null,
   }) {
     const { rows } = await pool.query(
       `
-      INSERT INTO order_items (
-        order_id,
-        product_id,
-        quantity,
-        price,
-        product_name,
-        unit_price,
-        image
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO order_items (order_id, product_id, quantity, price, product_name, product_image)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;
       `,
-      [orderId, productId, quantity, price, productName, unitPrice, image]
+      [orderId, productId, quantity, price, productName, productImage]
     );
     return rows[0] || null;
   },

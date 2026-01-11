@@ -17,7 +17,9 @@ const requiredEnvVars = [
   'JWT_SECRET',
   'REFRESH_TOKEN_SECRET',
   'SESSION_SECRET',
-  'STRIPE_SECRET_KEY', // <---- EZ HIÁNYZOTT
+  'STRIPE_SECRET_KEY',
+  'STRIPE_WEBHOOK_SECRET',
+  'CLIENT_URL', // <---- EZ HIÁNYZOTT
 ];
 
 for (const key of requiredEnvVars) {
@@ -42,7 +44,8 @@ const env = {
   sessionSecret: process.env.SESSION_SECRET,
 
   // Stripe kulcsok
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY, // ✅ Hozzáadva
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET, // ✅ Hozzáadva
 };
 
 export default env;

@@ -4,67 +4,57 @@ import orderItemService from "../services/orderItemService.js";
 import cartService from "../services/cartService.js";
 import CartItemModel from "../models/CartItemModel.js";
 
+const computeTotal = (items) =>
+  items.reduce((sum, it) => {
+    const price = Number(it.unit_price ?? it.price ?? 0);
+    const qty = Number(it.quantity ?? 0);
+    return sum + price * qty;
+  }, 0);
+
 const OrderController = {
   async createOrder(req, res, next) {
     try {
-      const { totalAmount, cartId } = req.body ?? {};
+      const { cartId: bodyCartId } = req.body ?? {};
 
       // 💡 Fejlesztői fallback (ha nincs authMiddleware)
       const userId = req.user?.id || 1;
 
-      let resolvedCartId = cartId;
-      if (!resolvedCartId) {
-        const cart = await cartService.getOrCreateCartByUserId(userId);
-        resolvedCartId = cart?.id ?? null;
-      }
+      const requestedCartId = bodyCartId ? Number(bodyCartId) : null;
+      const resolvedCartId = Number.isFinite(requestedCartId)
+        ? requestedCartId
+        : (await cartService.getCartByUserId(userId))?.id ?? null;
 
       if (!resolvedCartId) {
         return res.status(400).json({
           success: false,
-          message: "Missing cartId for order creation.",
+          message: "Cart not found.",
         });
       }
 
       const cartItems = await CartItemModel.getByCartId(resolvedCartId);
-      if (!cartItems.length) {
+      const totalAmount = computeTotal(cartItems);
+
+      if (!cartItems.length || totalAmount <= 0) {
         return res.status(400).json({
           success: false,
           message: "Cart is empty.",
         });
       }
 
-      const computedTotal = cartItems.reduce(
-        (sum, item) => sum + Number(item.unit_price) * Number(item.quantity),
-        0
-      );
-
-      if (
-        typeof totalAmount !== "undefined" &&
-        totalAmount !== null &&
-        Number(totalAmount) !== computedTotal
-      ) {
-        console.warn(
-          "⚠️ Order total mismatch:",
-          Number(totalAmount),
-          computedTotal
-        );
-      }
-
       const order = await orderService.createOrder({
         userId,
-        totalAmount: computedTotal,
+        totalAmount,
       });
 
       const orderItems = await Promise.all(
         cartItems.map((item) =>
           orderItemService.addItemToOrder({
             orderId: order.id,
-            productId: item.product_id,
+            productId: item.product_id ?? item.productId,
             quantity: item.quantity,
-            price: item.unit_price,
-            productName: item.name,
-            unitPrice: item.unit_price,
-            image: item.image,
+            price: item.unit_price ?? item.price,
+            productName: item.name ?? null,
+            productImage: item.image ?? null,
           })
         )
       );

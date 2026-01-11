@@ -13,13 +13,15 @@ const OrderItemController = {
 
   async addOrderItem(req, res, next) {
     try {
-      const { orderId, productId, quantity, price } = req.body;
-      const item = await orderItemService.addItemToOrder(
+      const { orderId, productId, quantity, price, productName, productImage } = req.body;
+      const item = await orderItemService.addItemToOrder({
         orderId,
         productId,
         quantity,
-        price
-      );
+        price,
+        productName,
+        productImage,
+      });
       res.json({ success: true, item });
     } catch (err) {
       next(err);
