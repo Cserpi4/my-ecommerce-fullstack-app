@@ -14,15 +14,21 @@ const paymentProvider = {
     return stripe;
   },
 
-  async createPaymentIntent({ amount, currency = "usd", metadata = {} }) {
+  async createPaymentIntent({ amount, currency = "usd", metadata = {}, idempotencyKey = null }) {
     const s = this.getStripe();
 
-    return s.paymentIntents.create({
+    const params = {
       amount,
       currency,
       automatic_payment_methods: { enabled: true },
       metadata,
-    });
+    };
+
+    if (idempotencyKey) {
+      return s.paymentIntents.create(params, { idempotencyKey });
+    }
+
+    return s.paymentIntents.create(params);
   },
 
   verifyWebhook({ rawBody, signature, webhookSecret }) {

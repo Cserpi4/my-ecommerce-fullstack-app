@@ -35,10 +35,19 @@ const paymentService = {
       throw err;
     }
 
+    const idempotencyKey = [
+      `cart:${resolvedCartId}`,
+      `order:${orderId ?? "none"}`,
+      `user:${userId ?? "anon"}`,
+      `amount:${amount}`,
+      `currency:${currency}`,
+    ].join("|");
+
     // Stripe PaymentIntent
     const paymentIntent = await paymentProvider.createPaymentIntent({
       amount,
       currency,
+      idempotencyKey,
       metadata: {
         cartId: String(resolvedCartId),
         isAnonymous: userId ? "false" : "true",
@@ -84,6 +93,10 @@ const paymentService = {
     if (event.type === "payment_intent.succeeded") {
       const pi = event.data.object;
       await this.updatePaymentStatus(pi.id, "succeeded");
+      const cartId = Number(pi.metadata?.cartId);
+      if (Number.isFinite(cartId) && cartId > 0) {
+        await CartItemModel.removeByCartId(cartId);
+      }
     }
 
     if (event.type === "payment_intent.payment_failed") {
