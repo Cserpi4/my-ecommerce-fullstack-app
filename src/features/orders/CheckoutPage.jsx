@@ -3,7 +3,12 @@ import { useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createOrder } from "./OrderSlice";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
 import paymentApi from "../../apis/paymentApi.js";
 import "./CheckoutPage.css";
 
@@ -25,7 +30,8 @@ const CheckoutForm = ({ orderData }) => {
     setLoading(true);
     setError(null);
 
-    const { error, paymentIntent } = await stripe.confirmPayment({
+    // ✅ FIX: ne destructuring-olj unused paymentIntent-et
+    const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/order-success`,
@@ -38,6 +44,11 @@ const CheckoutForm = ({ orderData }) => {
       setLoading(false);
       return;
     }
+
+    // success 
+     setLoading(false);
+     dispatch(createOrder({ cartId: orderData.cartId }));
+     navigate("/order-success");
 
     dispatch(
       createOrder({
@@ -136,7 +147,9 @@ const CheckoutPage = () => {
       ) : (
         clientSecret && (
           <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <CheckoutForm orderData={{ ...shipping, total, cartItems, cartId }} />
+            <CheckoutForm
+              orderData={{ ...shipping, total, cartItems, cartId }}
+            />
           </Elements>
         )
       )}

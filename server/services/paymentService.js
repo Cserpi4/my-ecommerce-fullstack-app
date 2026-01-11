@@ -3,6 +3,8 @@ import paymentProvider from "../utils/paymentProvider.js";
 import cartService from "./cartService.js";
 import CartItemModel from "../models/CartItemModel.js";
 import PaymentModel from "../models/PaymentModel.js";
+import orderService from "./orderService.js";
+import { isValidPaymentStatusTransition } from "../constants/paymentStatus.js";
 
 const computeTotalCents = (items) =>
   items.reduce((sum, it) => {
@@ -79,7 +81,23 @@ const paymentService = {
     return PaymentModel.getById(paymentId);
   },
 
-  async updatePaymentStatus(paymentIntentId, status) {
+  async updatePaymentStatus(paymentIntentId, status, { strict = true } = {}) {
+    const payment = await PaymentModel.getByPaymentIntentId(paymentIntentId);
+    if (!payment) {
+      const err = new Error("Payment not found");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (!isValidPaymentStatusTransition(payment.status, status)) {
+      if (strict) {
+        const err = new Error("Invalid payment status transition");
+        err.statusCode = 409;
+        throw err;
+      }
+      return payment;
+    }
+
     return PaymentModel.updateStatusByPaymentIntentId(paymentIntentId, status);
   },
 
@@ -108,6 +126,9 @@ const paymentService = {
     }
 
     await this.updatePaymentStatus(paymentIntentId, "refund_pending");
+    if (payment.order_id) {
+      await orderService.updateOrderStatus(payment.order_id, "refund_pending");
+    }
 
     try {
       return await paymentProvider.createRefund({
@@ -130,7 +151,12 @@ const paymentService = {
 
     if (event.type === "payment_intent.succeeded") {
       const pi = event.data.object;
-      await this.updatePaymentStatus(pi.id, "succeeded");
+      const updatedPayment = await this.updatePaymentStatus(pi.id, "succeeded", {
+        strict: false,
+      });
+      if (updatedPayment?.order_id) {
+        await orderService.updateOrderStatus(updatedPayment.order_id, "paid", { strict: false });
+      }
       const cartId = Number(pi.metadata?.cartId);
       if (Number.isFinite(cartId) && cartId > 0) {
         await CartItemModel.removeByCartId(cartId);
@@ -139,7 +165,12 @@ const paymentService = {
 
     if (event.type === "payment_intent.payment_failed") {
       const pi = event.data.object;
-      await this.updatePaymentStatus(pi.id, "failed");
+      const updatedPayment = await this.updatePaymentStatus(pi.id, "failed", { strict: false });
+      if (updatedPayment?.order_id) {
+        await orderService.updateOrderStatus(updatedPayment.order_id, "payment_failed", {
+          strict: false,
+        });
+      }
     }
 
     if (event.type === "refund.updated") {
@@ -147,7 +178,14 @@ const paymentService = {
       const paymentIntentId = refund.payment_intent;
       if (paymentIntentId) {
         if (refund.status === "failed" || refund.status === "canceled") {
-          await this.updatePaymentStatus(paymentIntentId, "refund_failed");
+          const updatedPayment = await this.updatePaymentStatus(paymentIntentId, "refund_failed", {
+            strict: false,
+          });
+          if (updatedPayment?.order_id) {
+            await orderService.updateOrderStatus(updatedPayment.order_id, "refund_failed", {
+              strict: false,
+            });
+          }
         }
       }
     }
@@ -158,7 +196,12 @@ const paymentService = {
       if (paymentIntentId) {
         const isPartial = Number(charge.amount_refunded) < Number(charge.amount);
         const status = isPartial ? "partially_refunded" : "refunded";
-        await this.updatePaymentStatus(paymentIntentId, status);
+        const updatedPayment = await this.updatePaymentStatus(paymentIntentId, status, {
+          strict: false,
+        });
+        if (updatedPayment?.order_id) {
+          await orderService.updateOrderStatus(updatedPayment.order_id, status, { strict: false });
+        }
       }
     }
 
