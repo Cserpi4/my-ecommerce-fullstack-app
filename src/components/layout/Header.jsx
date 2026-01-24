@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ShoppingCart, User, Home, Menu, X, Tally3, LogOut, UserCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../features/auth/AuthSlice';
 import './Header.css';
@@ -14,14 +14,10 @@ const Header = () => {
   const cartItems = useSelector(state => state.cart?.items || []);
   const totalItemsInCart = cartItems.reduce((total, item) => total + item.quantity, 0);
 
-  const handleNavigation = path => {
-    navigate(path);
-    setIsMobileMenuOpen(false);
-  };
-
   const handleLogout = () => {
     dispatch(logout());
     navigate('/');
+    setIsMobileMenuOpen(false);
   };
 
   const navItems = [
@@ -33,53 +29,53 @@ const Header = () => {
   return (
     <header className="header-root">
       <div className="header-content">
-        <div className="logo-link" onClick={() => handleNavigation('/')}>
+        <Link className="logo-link" to="/" onClick={() => setIsMobileMenuOpen(false)}>
           <Tally3 strokeWidth={3} /> Football-Shop
-        </div>
+        </Link>
 
         {/* Desktop nav */}
         <nav className="nav-links">
           {navItems.map(item => (
-            <div
+            <NavLink
               key={item.path}
-              className={`nav-item ${window.location.pathname === item.path ? 'active' : ''}`}
-              onClick={() => handleNavigation(item.path)}
+              to={item.path}
+              className={({ isActive }) => `nav-item nav-link ${isActive ? 'active' : ''}`}
             >
               {item.label}
-            </div>
+            </NavLink>
           ))}
 
           {user ? (
             <>
-              <div className="nav-item" onClick={() => handleNavigation('/account')}>
+              <NavLink to="/account" className="nav-item nav-link">
                 Account
-              </div>
-              <div className="nav-item logout" onClick={handleLogout}>
+              </NavLink>
+              <button type="button" className="nav-item logout" onClick={handleLogout}>
                 Logout
-              </div>
+              </button>
             </>
           ) : (
-            <div className="nav-item" onClick={() => handleNavigation('/login')}>
+            <NavLink to="/login" className="nav-item nav-link">
               Login
-            </div>
+            </NavLink>
           )}
         </nav>
 
         {/* Icon buttons */}
         <div className="icon-container">
-          <div className="icon-button" onClick={() => handleNavigation('/cart')}>
+          <Link className="icon-button" to="/cart" onClick={() => setIsMobileMenuOpen(false)}>
             <ShoppingCart size={24} />
             {totalItemsInCart > 0 && <span className="cart-badge">{totalItemsInCart}</span>}
-          </div>
+          </Link>
 
           {user ? (
-            <div className="icon-button" onClick={() => handleNavigation('/account')}>
+            <Link className="icon-button" to="/account" onClick={() => setIsMobileMenuOpen(false)}>
               <UserCircle size={24} />
-            </div>
+            </Link>
           ) : (
-            <div className="icon-button" onClick={() => handleNavigation('/login')}>
+            <Link className="icon-button" to="/login" onClick={() => setIsMobileMenuOpen(false)}>
               <User size={24} />
-            </div>
+            </Link>
           )}
 
           <div className="mobile-menu-icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
@@ -92,32 +88,41 @@ const Header = () => {
       {isMobileMenuOpen && (
         <nav className="mobile-nav">
           {navItems.map(item => (
-            <div
+            <NavLink
               key={item.path}
-              className="mobile-nav-item"
-              onClick={() => handleNavigation(item.path)}
+              to={item.path}
+              className="mobile-nav-item mobile-nav-link"
+              onClick={() => setIsMobileMenuOpen(false)}
             >
               <item.Icon size={20} />
               <span>{item.label}</span>
-            </div>
+            </NavLink>
           ))}
 
           {user ? (
             <>
-              <div className="mobile-nav-item" onClick={() => handleNavigation('/account')}>
+              <NavLink
+                to="/account"
+                className="mobile-nav-item mobile-nav-link"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
                 <UserCircle size={20} />
                 <span>My Account</span>
-              </div>
-              <div className="mobile-nav-item logout" onClick={handleLogout}>
+              </NavLink>
+              <button type="button" className="mobile-nav-item logout" onClick={handleLogout}>
                 <LogOut size={20} />
                 <span>Logout</span>
-              </div>
+              </button>
             </>
           ) : (
-            <div className="mobile-nav-item" onClick={() => handleNavigation('/login')}>
+            <NavLink
+              to="/login"
+              className="mobile-nav-item mobile-nav-link"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
               <User size={20} />
               <span>Login</span>
-            </div>
+            </NavLink>
           )}
         </nav>
       )}
